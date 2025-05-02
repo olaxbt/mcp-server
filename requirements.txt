@@ -1,0 +1,6 @@
+Flask
+loguru
+flask-cors
+flask-jwt-extended
+configparser
+flask-swagger-ui 
