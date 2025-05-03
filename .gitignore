@@ -57,6 +57,15 @@ coverage.xml
 *.log
 local_settings.py
 
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+*.sublime-workspace
+*.sublime-project
+
 # Flask stuff:
 instance/
 .webassets-cache
