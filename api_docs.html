@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        p { color: #555; }
+    </style>
+</head>
+<body>
+    <h1>API Documentation</h1>
+    <p>Welcome to the API documentation page. Here you will find information about the available endpoints.</p>
+    <h2>Authentication</h2>
+    <ul>
+        <li><strong>POST /auth/register</strong> - Register a new user.</li>
+        <li><strong>POST /auth/login</strong> - Login and receive a JWT token.</li>
+    </ul>
+    <h2>File Attachments</h2>
+    <ul>
+        <li><strong>POST /attachment/upload</strong> - Upload a file (JWT required).</li>
+        <li><strong>GET /attachment/file/&lt;file_id&gt;</strong> - Retrieve a file by UUID (JWT required).</li>
+    </ul>
+</body>
+</html> 
