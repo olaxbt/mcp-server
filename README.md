@@ -99,7 +99,9 @@ Contributions are welcome! Please feel free to submit a Pull Request to [https:/
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+Copyright (c) 2025 olaxbt
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
