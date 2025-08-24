@@ -1,4 +1,4 @@
-# OLAXBT MCP Gateway
+# OLAXBT MCP Server
 
 A modern, modular MCP (Model Context Protocol) server with scalable service architecture, supporting multiple MCP services including DeFi, Gaming, and search tools.
 
