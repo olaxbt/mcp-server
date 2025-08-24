@@ -1,108 +1,67 @@
-# MCP Server: Modern SDK Collection & Integration Platform
+# OLAXBT MCP Gateway
 
-## Overview
-
-MCP Server is a sophisticated Flask-based platform designed to bootstrap and consolidate multiple SDKs within a single server environment. It provides a unified interface for integrating various services and technologies through a collection of modular, extensible components organized as blueprints.
+The OlaXBT MCP Server features a modular, scalable architecture designed to efficiently support multiple services. This new structure separates concerns, enables plugin-based service loading, and offers comprehensive service management capabilities.
 
 ## Features
 
-- **Modular Blueprint Architecture**: Easily integrate new SDKs with a structured, maintainable approach
-- **Pre-configured SDK Integrations**:
-  - WalletConnect integration for blockchain wallet interactions
-  - Authentication system with JWT token support
-  - File attachment handling with secure storage
-- **Interactive API Documentation**: Auto-generated Swagger documentation for all endpoints
-- **Cross-Origin Resource Sharing (CORS)**: Built-in support for cross-domain requests
-- **Secure Authentication**: JWT-based authentication system
-- **Developer-Friendly**: Clear organization makes extending functionality straightforward
+- **MCP Gateway**: Central management for multiple MCP services
+- **DuckDuckGo Integration**: Built-in web search capabilities
+- **Service Registry**: Dynamic service discovery and registration
+- **Tool Routing**: Automatic routing of tool calls to appropriate services
+- **FastAPI Backend**: High-performance async web framework
 
-## Tech Stack
+## Local Development
 
-- **Framework**: Flask
-- **Documentation**: Flasgger (Swagger UI)
-- **Authentication**: Flask-JWT-Extended
-- **Logging**: Loguru
-- **Security**: CORS support
-
-## Project Structure
-
-```
-mcp-server/
-├── app/
-│   ├── routes/
-│   │   ├── auth_routes/           # JWT authentication endpoints
-│   │   ├── attachment_routes/     # File upload/download functionality  
-│   │   ├── main_routes/           # Core application routes
-│   │   ├── swagger_routes/        # API documentation
-│   │   └── walletconnect_routes/  # Blockchain wallet integration
-│   ├── static/                    # Static assets
-│   └── templates/                 # HTML templates
-├── config.ini                     # Configuration settings
-├── requirements.txt               # Project dependencies
-└── run.py                         # Application entry point
+1. **Install dependencies:**
+```bash
+pip install -r requirements.txt
 ```
 
-## Getting Started
+2. **Run locally:**
+```bash
+python run.py
+```
 
-### Prerequisites
+## Deployment
 
-- Python 3.6+
-- pip (Python package manager)
+Deploy to any server that supports Python applications:
 
-### Installation
-
-1. Clone the repository:
+1. **Upload your code to your server**
+2. **Install dependencies:** `pip install -r requirements.txt`
+3. **Run the server:** `uvicorn app.mcp.server:app --host 0.0.0.0 --port 8080`
+4. **Set environment variables:**
    ```bash
-   git clone https://github.com/olaxbt/mcp-server.git
-   cd mcp-server
+   MCP_HOST=0.0.0.0
+   MCP_PORT=8080
+   MCP_DEBUG=false
    ```
 
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+## Client Connection in vscode
 
-3. Configure your environment:
-   ```bash
-   # Ensure config.ini has your JWT secret key configured
-   ```
+You can add .vscode/mcp.json by adding HTTP or SSE to a remote server, change localhost:3000 to your deployed address,
 
-4. Run the server:
-   ```bash
-   python run.py
-   ```
+```json
+{
+	"servers": {
+		"my-mcp-server": {
+			"url": "http://localhost:3000/mcp",
+			"type": "http"
+		}
+	},
+	"inputs": []
+}
+```
 
-5. Access the Swagger UI documentation:
-   ```
-   http://localhost:5000/apidocs/
-   ```
+## Tools for testing
 
-## Extending MCP Server
+- `duckduckgo_search` - Web search using DuckDuckGo
+- `web_search` - Enhanced search (text, news, images, videos)
 
-The blueprint-based architecture makes it easy to add new SDKs or services:
+## Architecture
 
-1. Create a new directory in `app/routes/` for your service
-2. Define your SDK wrapper class to encapsulate the SDK functionality
-3. Create a blueprint with your routes
-4. Register your blueprint in `app/__init__.py`
+```
+Client → MCP Gateway → [Service 1, Service 2, ..., Service N]
+                    → Local Tools (DuckDuckGo, Web Search)
+```
 
-## Use Cases
-
-- **Blockchain Applications**: Leverage the WalletConnect integration for decentralized applications
-- **Multi-API Gateway**: Create a unified interface for multiple third-party services
-- **Microservice Aggregator**: Combine several microservices under a single API
-- **Developer Tools**: Build and test against multiple SDKs in a controlled environment
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request to [https://github.com/olaxbt/mcp-server](https://github.com/olaxbt/mcp-server).
-
-## License
-
-Copyright (c) 2025 olaxbt
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-Built with ❤️ by olaxbt 
+The server provides a unified interface for multiple MCP services while maintaining local tool capabilities. 

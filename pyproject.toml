@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "olaxbt-mcp-server"
+version = "2.0.0"
+description = "Modern MCP Server with DuckDuckGo Search"
+authors = [{name = "OLAXBT Team"}]
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8+",
+]
+
+dependencies = [
+    "pydantic>=2.0.0,<3.0.0",
+    "fastapi>=0.104.0,<1.0.0",
+    "uvicorn[standard]>=0.24.0,<1.0.0",
+    "websockets>=12.0,<13.0",
+    "duckduckgo-search>=4.1.1,<5.0.0",
+    "aiohttp>=3.9.0,<4.0.0",
+    "python-dotenv>=1.0.0,<2.0.0",
+    "loguru>=0.7.2,<1.0.0",
+    "pydantic-settings>=2.0.0,<3.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/olaxbt/olaxbt-mcp"
+Repository = "https://github.com/olaxbt/olaxbt-mcp"
+Issues = "https://github.com/olaxbt/olaxbt-mcp/issues"
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"

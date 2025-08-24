@@ -1,0 +1,198 @@
+# MCP Services Configuration
+# This file defines all available MCP services and their configurations
+
+services:
+  # Meteora DeFi Service
+  - id: meteora
+    name: "Meteora DeFi"
+    description: "DeFi protocol for liquidity pools and swaps on Solana"
+    module: "app.mcp.services.meteora"
+    class: "MeteoraService"
+    enabled: true
+    category: "defi"
+    url: "http://localhost:3001"
+    metadata:
+      chain: "solana"
+      protocol: "defi"
+      features: ["liquidity_pools", "swaps", "yield_farming"]
+    init_params:
+      rpc_url: "https://api.mainnet-beta.solana.com"
+      api_key: null  # Set via environment variable
+    
+  # GMGN Gaming Service
+  - id: gmgn
+    name: "GMGN Gaming"
+    description: "Gaming and NFT platform with leaderboards and user profiles"
+    module: "app.mcp.services.gmgn"
+    class: "GMGNService"
+    enabled: true
+    category: "gaming"
+    url: "http://localhost:3002"
+    metadata:
+      platform: "gaming"
+      type: "nft_platform"
+      features: ["games", "nfts", "leaderboards", "profiles"]
+    init_params:
+      api_base_url: "https://api.gmgn.com"
+      api_key: null  # Set via environment variable
+    
+  # Example: Jupiter Aggregator Service (for future use)
+  - id: jupiter
+    name: "Jupiter Aggregator"
+    description: "Best swap routes across Solana DEXs"
+    module: "app.mcp.services.jupiter"
+    class: "JupiterService"
+    enabled: false  # Disabled until implemented
+    category: "defi"
+    url: "http://localhost:3003"
+    metadata:
+      chain: "solana"
+      protocol: "aggregator"
+      features: ["swap_routes", "price_quotes", "cross_dex"]
+    init_params:
+      rpc_url: "https://api.mainnet-beta.solana.com"
+    
+  # Example: Raydium Service (for future use)
+  - id: raydium
+    name: "Raydium DEX"
+    description: "Solana-based decentralized exchange"
+    module: "app.mcp.services.raydium"
+    class: "RaydiumService"
+    enabled: false  # Disabled until implemented
+    category: "defi"
+    url: "http://localhost:3004"
+    metadata:
+      chain: "solana"
+      protocol: "dex"
+      features: ["spot_trading", "liquidity_pools", "farms"]
+    init_params:
+      rpc_url: "https://api.mainnet-beta.solana.com"
+    
+  # Example: Analytics Service (for future use)
+  - id: analytics
+    name: "Market Analytics"
+    description: "Cryptocurrency market data and analytics"
+    module: "app.mcp.services.analytics"
+    class: "AnalyticsService"
+    enabled: false  # Disabled until implemented
+    category: "analytics"
+    url: "http://localhost:3005"
+    metadata:
+      type: "market_data"
+      features: ["price_charts", "volume_analysis", "trend_indicators"]
+    init_params:
+      data_sources: ["coingecko", "coinmarketcap", "defillama"]
+    
+  # Example: Trading Service (for future use)
+  - id: trading
+    name: "Trading Bot"
+    description: "Automated trading strategies and execution"
+    module: "app.mcp.services.trading"
+    class: "TradingService"
+    enabled: false  # Disabled until implemented
+    category: "trading"
+    url: "http://localhost:3006"
+    metadata:
+      type: "trading_bot"
+      features: ["strategy_execution", "risk_management", "portfolio_tracking"]
+    init_params:
+      max_position_size: 0.1
+      risk_per_trade: 0.02
+    
+  # Example: NFT Service (for future use)
+  - id: nft
+    name: "NFT Marketplace"
+    description: "NFT trading and collection management"
+    module: "app.mcp.services.nft"
+    class: "NFTService"
+    enabled: false  # Disabled until implemented
+    category: "nft"
+    url: "http://localhost:3007"
+    metadata:
+      type: "marketplace"
+      features: ["trading", "collections", "metadata", "royalties"]
+    init_params:
+      supported_chains: ["solana", "ethereum", "polygon"]
+    
+  # Example: Social Service (for future use)
+  - id: social
+    name: "Social Feed"
+    description: "Social media integration and sentiment analysis"
+    module: "app.mcp.services.social"
+    class: "SocialService"
+    enabled: false  # Disabled until implemented
+    category: "social"
+    url: "http://localhost:3008"
+    metadata:
+      type: "social_media"
+      features: ["sentiment_analysis", "trending_topics", "user_engagement"]
+    init_params:
+      platforms: ["twitter", "telegram", "discord"]
+    
+  # Example: News Service (for future use)
+  - id: news
+    name: "News Aggregator"
+    description: "Cryptocurrency news and market updates"
+    module: "app.mcp.services.news"
+    class: "NewsService"
+    enabled: false  # Disabled until implemented
+    category: "news"
+    url: "http://localhost:3009"
+    metadata:
+      type: "news_aggregator"
+      features: ["real_time_updates", "sentiment_analysis", "source_verification"]
+    init_params:
+      sources: ["coindesk", "cointelegraph", "theblock"]
+    
+  # Example: AI Service (for future use)
+  - id: ai
+    name: "AI Assistant"
+    description: "AI-powered market analysis and predictions"
+    module: "app.mcp.services.ai"
+    class: "AIService"
+    enabled: false  # Disabled until implemented
+    category: "ai"
+    url: "http://localhost:3010"
+    metadata:
+      type: "ai_analysis"
+      features: ["market_prediction", "pattern_recognition", "risk_assessment"]
+    init_params:
+      model_type: "transformer"
+      prediction_horizon: "24h"
+
+# Global settings
+settings:
+  auto_discovery: true
+  health_check_interval: 30  # seconds
+  max_retries: 3
+  timeout: 10  # seconds
+  
+# Service categories for organization
+categories:
+  defi:
+    description: "Decentralized Finance protocols and tools"
+    color: "#00D4AA"
+  gaming:
+    description: "Gaming platforms and NFT games"
+    color: "#FF6B6B"
+  nft:
+    description: "Non-Fungible Token services"
+    color: "#4ECDC4"
+  trading:
+    description: "Trading tools and strategies"
+    color: "#45B7D1"
+  analytics:
+    description: "Market data and analysis tools"
+    color: "#96CEB4"
+  social:
+    description: "Social media and community tools"
+    color: "#FFEAA7"
+  news:
+    description: "News and information services"
+    color: "#DDA0DD"
+  ai:
+    description: "Artificial Intelligence services"
+    color: "#98D8C8"
+  general:
+    description: "General purpose services"
+    color: "#F7DC6F"
