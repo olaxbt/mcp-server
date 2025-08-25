@@ -3,7 +3,37 @@ from typing import Any, Dict, List, Optional
 from fastapi.responses import JSONResponse
 
 from .service_registry import ServiceRegistry
-from .tools import DuckDuckGoSearchTool, WebSearchTool
+from .tools import (
+    DuckDuckGoSearchTool,
+    WebSearchTool,
+    CryptoPriceTool,
+    DeFiProtocolTool,
+    PortfolioTrackerTool,
+    CryptoNewsTool,
+    NFTMarketplaceTool,
+    MarketAnalysisTool,
+    NotificationTool,
+    APYCalculatorTool,
+    JupiterTool,
+    RaydiumTool,
+    LunarCrushTool,
+    CoinDeskTool,
+    AaveTool,
+    PumpNewsTool,
+    PumpFunTool,
+    GMGNTool,
+    MerklTool,
+    YouTubeTool,
+    GmailTool,
+    GoogleCalendarTool,
+    TwitterTool,
+    RedditTool,
+    OpenWeatherTool,
+    GoogleMapsTool,
+    JiraTool,
+    SlackTool,
+    CurrencyConverterTool
+)
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +44,34 @@ class MCPRouter:
         self.registry = service_registry
         self.local_tools = {
             "duckduckgo_search": DuckDuckGoSearchTool(),
-            "web_search": WebSearchTool()
+            "web_search": WebSearchTool(),
+            "crypto_price": CryptoPriceTool(),
+            "defi_protocol": DeFiProtocolTool(),
+            "portfolio_tracker": PortfolioTrackerTool(),
+            "crypto_news": CryptoNewsTool(),
+            "nft_marketplace": NFTMarketplaceTool(),
+            "market_analysis": MarketAnalysisTool(),
+            "notification": NotificationTool(),
+            "apy_calculator": APYCalculatorTool(),
+            "jupiter": JupiterTool(),
+            "raydium": RaydiumTool(),
+            "lunarcrush": LunarCrushTool(),
+            "coindesk": CoinDeskTool(),
+            "aave": AaveTool(),
+            "pumpnews": PumpNewsTool(),
+            "pumpfun": PumpFunTool(),
+            "gmgn": GMGNTool(),
+            "merkl": MerklTool(),
+            "youtube": YouTubeTool(),
+            "gmail": GmailTool(),
+            "google_calendar": GoogleCalendarTool(),
+            "twitter": TwitterTool(),
+            "reddit": RedditTool(),
+            "openweather": OpenWeatherTool(),
+                                "googlemaps": GoogleMapsTool(),
+                    "jira": JiraTool(),
+                    "slack": SlackTool(),
+                    "currency_converter": CurrencyConverterTool()
         }
     
     def format_tool_result_for_mcp(self, result: List[Dict[str, Any]], tool_name: str) -> Dict[str, Any]:

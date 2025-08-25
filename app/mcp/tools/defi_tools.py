@@ -1,37 +1,20 @@
+"""
+DeFi Tools
+Contains tools for interacting with DeFi protocols like Aave
+"""
+
 import asyncio
 import logging
 import time
 import aiohttp
 import json
 from typing import Any, Dict, List, Optional
-from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 import os
 
-from duckduckgo_search import DDGS
+from .mcp_tool import MCPTool
 
 logger = logging.getLogger(__name__)
-
-class MCPTool(ABC):
-    @property
-    @abstractmethod
-    def name(self) -> str:
-        pass
-    
-    @property
-    @abstractmethod
-    def description(self) -> str:
-        pass
-    
-    @property
-    @abstractmethod
-    def input_schema(self) -> Dict[str, Any]:
-        pass
-    
-    @abstractmethod
-    async def execute(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
-        pass
-
 
 
 class AaveTool(MCPTool):
@@ -96,18 +79,6 @@ class AaveTool(MCPTool):
             },
             "required": ["action"]
         }
-    
-    async def _get_session(self):
-        """Get or create aiohttp session."""
-        if self.session is None:
-            self.session = aiohttp.ClientSession()
-        return self.session
-    
-    async def _cleanup_session(self):
-        """Clean up aiohttp session."""
-        if self.session:
-            await self.session.close()
-            self.session = None
     
     async def execute(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
         try:
@@ -705,4 +676,3 @@ class AaveTool(MCPTool):
             recommendations.append("Position is well-collateralized. Consider optimizing for better yields")
         
         return recommendations
-

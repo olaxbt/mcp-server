@@ -76,6 +76,128 @@ curl http://localhost:3000/services/meteora/status
 }
 ```
 
+### Tool Usage Examples
+
+#### **Cryptocurrency Price Tool**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "crypto_price",
+    "arguments": {
+      "coin_id": "bitcoin",
+      "vs_currency": "usd",
+      "include_market_data": true,
+      "include_24hr_change": true
+    }
+  }
+}
+```
+
+#### **Portfolio Tracker Tool**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/call",
+  "params": {
+    "name": "portfolio_tracker",
+    "arguments": {
+      "action": "create",
+      "portfolio_id": "my_portfolio",
+      "name": "My Crypto Portfolio"
+    }
+  }
+}
+```
+
+#### **DeFi Protocol Tool**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": {
+    "name": "defi_protocol",
+    "arguments": {
+      "protocol": "meteora",
+      "action": "pools"
+    }
+  }
+}
+```
+
+#### **Market Analysis Tool**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "method": "tools/call",
+  "params": {
+    "name": "market_analysis",
+    "arguments": {
+      "coin_id": "bitcoin",
+      "analysis_type": "technical_indicators",
+      "timeframe": "7d"
+    }
+  }
+}
+```
+
+#### **APY Calculator Tool**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 5,
+  "method": "tools/call",
+  "params": {
+    "name": "apy_calculator",
+    "arguments": {
+      "calculation_type": "liquidity_pool",
+      "protocol": "meteora",
+      "principal": 10000,
+      "time_period": 365
+    }
+  }
+}
+```
+
+#### **NFT Marketplace Tool**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 6,
+  "method": "tools/call",
+  "params": {
+    "name": "nft_marketplace",
+    "arguments": {
+      "action": "collection_stats",
+      "collection_slug": "bored-ape-yacht-club",
+      "chain": "ethereum"
+    }
+  }
+}
+```
+
+#### **NFT Floor Price**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 7,
+  "method": "tools/call",
+  "params": {
+    "name": "nft_marketplace",
+    "arguments": {
+      "action": "floor_price",
+      "collection_slug": "degen-ape-academy",
+      "chain": "solana"
+    }
+  }
+}
+```
+
 ### Add New Service
 ```bash
 curl -X POST http://localhost:3000/services/add \
@@ -122,6 +244,41 @@ pip install -r requirements.txt
 python run.py
 ```
 
+3. **Test all tools:**
+```bash
+python scripts/test_tools.py
+```
+
+4. **Test NFT marketplace specifically:**
+```bash
+python scripts/test_nft_tool.py
+```
+
+5. **Test tools with real data implementations:**
+```bash
+python scripts/test_real_data_tools.py
+```
+
+This will run comprehensive tests for all implemented tools including:
+- Cryptocurrency price data
+- DeFi protocol interactions
+- Portfolio tracking and analysis
+- Crypto news aggregation
+- NFT marketplace data (real API integrations)
+- Market analysis and technical indicators (real-time data)
+- Notification system (real market integration)
+- APY calculations (real protocol data)
+
+### Real Data Implementations
+
+The following tools now use real APIs instead of hardcoded data:
+
+- **MarketAnalysisTool**: Uses CoinGecko API for real-time price data, Fear & Greed Index API for sentiment, and calculates actual technical indicators
+- **APYCalculatorTool**: Fetches real DeFi protocol data from CoinGecko and calculates APY with actual market rates
+- **NotificationTool**: Integrates with CoinGecko API for real-time price checking and market summaries
+
+All tools include comprehensive error handling and fallback to reasonable defaults when APIs are unavailable.
+
 ## Deployment
 
 Deploy to any server that supports Python applications:
@@ -155,8 +312,45 @@ Add `.vscode/mcp.json` for HTTP or SSE connections:
 ## Available Tools
 
 ### Local Tools
+
+#### **Search & Information Tools**
 - `duckduckgo_search` - Web search using DuckDuckGo
 - `web_search` - Enhanced search (text, news, images, videos)
+- `crypto_news` - Cryptocurrency-specific news aggregation with sentiment analysis
+
+#### **Cryptocurrency & DeFi Tools**
+- `crypto_price` - Real-time cryptocurrency prices and market data from CoinGecko
+- `defi_protocol` - Interact with DeFi protocols (Meteora liquidity pools, Jupiter swap aggregator)
+- `portfolio_tracker` - Track and analyze cryptocurrency portfolios with real-time pricing
+- `apy_calculator` - Calculate APY using real DeFi protocol data:
+  - Liquidity pool APY with impermanent loss estimates
+  - Yield farming APY with compound interest calculations
+  - Staking APY with real protocol data
+  - Compound interest with monthly breakdowns
+  - Real-time DeFi protocol data from CoinGecko
+
+#### **NFT & Gaming Tools**
+- `nft_marketplace` - Real-time NFT marketplace data from OpenSea, Magic Eden, and other major marketplaces
+  - Collection information and statistics
+  - Floor prices with 24h/7d changes
+  - Trading volume and sales data
+  - Recent sales with transaction details
+  - Support for Ethereum, Solana, and Polygon chains
+
+#### **Market Analysis Tools**
+- `market_analysis` - Advanced market analysis with real-time data:
+  - Technical indicators (RSI, MACD, Bollinger Bands, Moving Averages)
+  - Trend analysis with momentum and key levels
+  - Market sentiment using Fear & Greed Index and social metrics
+  - Volatility analysis with risk metrics (VaR, Sharpe ratio, Sortino ratio)
+  - Real-time data from CoinGecko API
+
+#### **Utility Tools**
+- `notification` - Set up and manage alerts with real market integration:
+  - Price alerts with real-time CoinGecko price checking
+  - News alerts for cryptocurrency and DeFi topics
+  - Portfolio alerts with market summary data
+  - Real-time market data integration for alert testing
 
 ### Service Tools
 Tools are dynamically loaded from registered services and can include:
@@ -189,6 +383,33 @@ app/mcp/
 - aiohttp
 - websockets
 - pydantic
+
+## Environment Variables
+
+For full functionality, set the following environment variables:
+
+```bash
+# NFT Marketplace APIs (optional but recommended)
+OPENSEA_API_KEY=your_opensea_api_key_here
+RESERVOIR_API_KEY=your_reservoir_api_key_here
+
+# Server Configuration
+MCP_HOST=0.0.0.0
+MCP_PORT=3000
+MCP_DEBUG=false
+```
+
+### Getting API Keys
+
+1. **OpenSea API Key**: 
+   - Visit [OpenSea API Documentation](https://docs.opensea.io/reference/api-overview)
+   - Sign up for an API key at [OpenSea Developer Portal](https://docs.opensea.io/reference/api-overview#api-keys)
+
+2. **Reservoir API Key** (optional):
+   - Visit [Reservoir API Documentation](https://docs.reservoir.tools/)
+   - Get an API key for enhanced Ethereum/Polygon data
+
+**Note**: The NFT marketplace tool will work without API keys but with rate limits. API keys provide higher rate limits and better reliability.
 
 ## License
 
