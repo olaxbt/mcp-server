@@ -3,6 +3,8 @@ from typing import Any, Dict, List, Optional
 from fastapi.responses import JSONResponse
 
 from .service_registry import ServiceRegistry
+from .utils.tool_registry import ToolRegistry
+from .tool_configs.tool_config import get_tool_config, get_tool_required_params, get_tool_schema
 from .tools import (
     DuckDuckGoSearchTool,
     WebSearchTool,
@@ -42,6 +44,9 @@ class MCPRouter:
     
     def __init__(self, service_registry: ServiceRegistry):
         self.registry = service_registry
+        self.tool_registry = ToolRegistry()
+        
+        # Initialize tools
         self.local_tools = {
             "duckduckgo_search": DuckDuckGoSearchTool(),
             "web_search": WebSearchTool(),
@@ -68,61 +73,41 @@ class MCPRouter:
             "twitter": TwitterTool(),
             "reddit": RedditTool(),
             "openweather": OpenWeatherTool(),
-                                "googlemaps": GoogleMapsTool(),
-                    "jira": JiraTool(),
-                    "slack": SlackTool(),
-                    "currency_converter": CurrencyConverterTool()
+            "googlemaps": GoogleMapsTool(),
+            "jira": JiraTool(),
+            "slack": SlackTool(),
+            "currency_converter": CurrencyConverterTool()
         }
+        
+        # Register all tools with validation rules
+        self._register_all_tools()
+    
+    def _register_all_tools(self):
+        """Register all tools with the tool registry for validation and formatting"""
+        for tool_name, tool_instance in self.local_tools.items():
+            config = get_tool_config(tool_name)
+            required_params = config.get("required_params", [])
+            schema = config.get("schema", {})
+            
+            self.tool_registry.register_tool(
+                tool_name=tool_name,
+                tool_instance=tool_instance,
+                required_params=required_params,
+                schema=schema
+            )
+            logger.info(f"Registered tool: {tool_name} with validation rules")
     
     def format_tool_result_for_mcp(self, result: List[Dict[str, Any]], tool_name: str) -> Dict[str, Any]:
-        """Format tool results in the correct MCP format with content array"""
+        """Format tool results using the new systematic tool registry"""
         try:
-            if not result:
-                return {
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": f"No results found for {tool_name}"
-                        }
-                    ]
-                }
-            
-            # Convert the result to a formatted text response
-            formatted_text = f"Search Results for {tool_name}:\n\n"
-            
-            for i, item in enumerate(result, 1):
-                if isinstance(item, dict):
-                    if "error" in item:
-                        formatted_text += f"{i}. ❌ Error: {item['error']}\n"
-                    else:
-                        title = item.get("title", "No title")
-                        link = item.get("link", "No link")
-                        snippet = item.get("snippet", "No description")
-                        source = item.get("source", "Unknown source")
-                        
-                        formatted_text += f"{i}. **{title}**\n"
-                        formatted_text += f"   URL: {link}\n"
-                        formatted_text += f"   Source: {source}\n"
-                        formatted_text += f"   Description: {snippet}\n\n"
-                else:
-                    formatted_text += f"{i}. {str(item)}\n\n"
-            
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": formatted_text.strip()
-                    }
-                ]
-            }
-            
+            return self.tool_registry._format_tool_response(tool_name, result)
         except Exception as e:
-            logger.error(f"Error formatting tool result: {e}")
+            logger.error(f"Error formatting tool result for {tool_name}: {e}")
             return {
                 "content": [
                     {
                         "type": "text",
-                        "text": f"Error formatting results: {str(e)}"
+                        "text": f"❌ Error formatting results for {tool_name}: {str(e)}"
                     }
                 ]
             }

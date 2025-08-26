@@ -650,18 +650,75 @@ class RaydiumTool(MCPTool):
     async def _get_tokens(self) -> List[Dict[str, Any]]:
         """Get Raydium supported tokens"""
         try:
-            # Raydium tokens endpoint doesn't exist, return fallback data
-            return [{
-                "type": "raydium_tokens",
-                "tokens": [],
-                "total_tokens": 0,
-                "note": "Raydium tokens endpoint not available in current API",
-                "timestamp": datetime.now().isoformat()
-            }]
+            session = await self._get_session()
             
+            # Try to get tokens from Raydium pools endpoint
+            pools_url = f"{self.raydium_base_url}/pools"
+            
+            async with session.get(pools_url) as response:
+                if response.status == 200:
+                    pools_data = await response.json()
+                    
+                    if isinstance(pools_data, list):
+                        # Extract unique tokens from pools
+                        tokens = set()
+                        for pool in pools_data:
+                            if isinstance(pool, dict):
+                                token_id = pool.get("token-id")
+                                if token_id:
+                                    tokens.add(token_id)
+                        
+                        # Convert to list and format
+                        token_list = []
+                        for token_id in list(tokens)[:50]:  # Limit to 50 tokens
+                            token_list.append({
+                                "mint_address": token_id,
+                                "symbol": token_id[:8] + "...",  # Truncate for display
+                                "type": "SPL Token"
+                            })
+                        
+                        return [{
+                            "type": "raydium_tokens",
+                            "tokens": token_list,
+                            "total_tokens": len(token_list),
+                            "note": f"Extracted from {len(pools_data)} active pools",
+                            "timestamp": datetime.now().isoformat()
+                        }]
+                    else:
+                        return [{"error": "Invalid response format from Raydium API"}]
+                else:
+                    # Fallback to common Solana tokens if API fails
+                    common_tokens = [
+                        {"mint_address": "So11111111111111111111111111111111111111112", "symbol": "SOL", "type": "Native"},
+                        {"mint_address": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "symbol": "USDC", "type": "SPL Token"},
+                        {"mint_address": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB", "symbol": "USDT", "type": "SPL Token"},
+                        {"mint_address": "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R", "symbol": "RAY", "type": "SPL Token"},
+                        {"mint_address": "SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt", "symbol": "SRM", "type": "SPL Token"}
+                    ]
+                    
+                    return [{
+                        "type": "raydium_tokens",
+                        "tokens": common_tokens,
+                        "total_tokens": len(common_tokens),
+                        "note": "Common Solana tokens (Raydium API unavailable)",
+                        "timestamp": datetime.now().isoformat()
+                    }]
+                    
         except Exception as e:
             logger.error(f"Error getting Raydium tokens: {e}")
-            return [{"error": f"Failed to get tokens: {str(e)}"}]
+            # Return common tokens as fallback
+            common_tokens = [
+                {"mint_address": "So11111111111111111111111111111111111111112", "symbol": "SOL", "type": "Native"},
+                {"mint_address": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "symbol": "USDC", "type": "SPL Token"}
+            ]
+            
+            return [{
+                "type": "raydium_tokens",
+                "tokens": common_tokens,
+                "total_tokens": len(common_tokens),
+                "note": "Common Solana tokens (error fallback)",
+                "timestamp": datetime.now().isoformat()
+            }]
     
     async def _get_pool_info(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Get detailed information about a specific pool"""

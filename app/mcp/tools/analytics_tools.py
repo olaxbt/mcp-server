@@ -68,6 +68,10 @@ class LunarCrushTool(MCPTool):
                     "type": "array",
                     "items": {"type": "string"},
                     "description": "Specific metrics to include"
+                },
+                "lunarcrush_api_key": {
+                    "type": "string",
+                    "description": "LunarCrush API key for real-time data (optional, will use sample data if not provided)"
                 }
             },
             "required": ["action"]
@@ -90,18 +94,21 @@ class LunarCrushTool(MCPTool):
         try:
             action = arguments.get("action")
             
+            # Get API key from arguments or fall back to environment variable
+            api_key = arguments.get("lunarcrush_api_key") or self.api_key
+            
             if action == "get_social_sentiment":
-                return await self._get_social_sentiment(arguments)
+                return await self._get_social_sentiment(arguments, api_key)
             elif action == "get_market_intelligence":
-                return await self._get_market_intelligence(arguments)
+                return await self._get_market_intelligence(arguments, api_key)
             elif action == "get_influence_analysis":
-                return await self._get_influence_analysis(arguments)
+                return await self._get_influence_analysis(arguments, api_key)
             elif action == "get_trending_assets":
-                return await self._get_trending_assets(arguments)
+                return await self._get_trending_assets(arguments, api_key)
             elif action == "get_historical_data":
-                return await self._get_historical_data(arguments)
+                return await self._get_historical_data(arguments, api_key)
             elif action == "get_comparative_analysis":
-                return await self._get_comparative_analysis(arguments)
+                return await self._get_comparative_analysis(arguments, api_key)
             else:
                 return [{"error": f"Unknown action: {action}"}]
                 
@@ -111,13 +118,13 @@ class LunarCrushTool(MCPTool):
         finally:
             await self._cleanup_session()
     
-    async def _get_social_sentiment(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def _get_social_sentiment(self, arguments: Dict[str, Any], api_key: str = None) -> List[Dict[str, Any]]:
         """Get social sentiment data for a cryptocurrency"""
         try:
             symbol = arguments.get("symbol", "BTC")
             timeframe = arguments.get("timeframe", "24h")
             
-            if not self.api_key:
+            if not api_key:
                 return [{
                     "type": "lunarcrush_social_sentiment",
                     "symbol": symbol,
@@ -145,7 +152,7 @@ class LunarCrushTool(MCPTool):
             params = {
                 "symbol": symbol,
                 "interval": timeframe,
-                "key": self.api_key
+                "key": api_key
             }
             
             async with session.get(url, params=params) as response:
@@ -177,13 +184,13 @@ class LunarCrushTool(MCPTool):
             logger.error(f"Error getting social sentiment: {e}")
             return [{"error": f"Failed to get social sentiment: {str(e)}"}]
     
-    async def _get_market_intelligence(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def _get_market_intelligence(self, arguments: Dict[str, Any], api_key: str = None) -> List[Dict[str, Any]]:
         """Get market intelligence data for a cryptocurrency"""
         try:
             symbol = arguments.get("symbol", "BTC")
             timeframe = arguments.get("timeframe", "24h")
             
-            if not self.api_key:
+            if not api_key:
                 return [{
                     "type": "lunarcrush_market_intelligence",
                     "symbol": symbol,
@@ -208,7 +215,7 @@ class LunarCrushTool(MCPTool):
             params = {
                 "symbol": symbol,
                 "interval": timeframe,
-                "key": self.api_key
+                "key": api_key
             }
             
             async with session.get(url, params=params) as response:
@@ -241,13 +248,13 @@ class LunarCrushTool(MCPTool):
             logger.error(f"Error getting market intelligence: {e}")
             return [{"error": f"Failed to get market intelligence: {str(e)}"}]
     
-    async def _get_influence_analysis(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def _get_influence_analysis(self, arguments: Dict[str, Any], api_key: str = None) -> List[Dict[str, Any]]:
         """Get influence analysis and top influencers"""
         try:
             symbol = arguments.get("symbol", "BTC")
             limit = min(arguments.get("limit", 10), 50)
             
-            if not self.api_key:
+            if not api_key:
                 return [{
                     "type": "lunarcrush_influence_analysis",
                     "symbol": symbol,
@@ -284,7 +291,7 @@ class LunarCrushTool(MCPTool):
             params = {
                 "symbol": symbol,
                 "limit": limit,
-                "key": self.api_key
+                "key": api_key
             }
             
             async with session.get(url, params=params) as response:
@@ -318,13 +325,13 @@ class LunarCrushTool(MCPTool):
             logger.error(f"Error getting influence analysis: {e}")
             return [{"error": f"Failed to get influence analysis: {str(e)}"}]
     
-    async def _get_trending_assets(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def _get_trending_assets(self, arguments: Dict[str, Any], api_key: str = None) -> List[Dict[str, Any]]:
         """Get currently trending cryptocurrencies"""
         try:
             limit = min(arguments.get("limit", 10), 100)
             timeframe = arguments.get("timeframe", "24h")
             
-            if not self.api_key:
+            if not api_key:
                 return [{
                     "type": "lunarcrush_trending_assets",
                     "note": "LunarCrush API key required. Set LUNARCRUSH_API_KEY environment variable.",
@@ -359,7 +366,7 @@ class LunarCrushTool(MCPTool):
                 "interval": timeframe,
                 "limit": limit,
                 "sort": "social_score",
-                "key": self.api_key
+                "key": api_key
             }
             
             async with session.get(url, params=params) as response:
@@ -395,13 +402,13 @@ class LunarCrushTool(MCPTool):
             logger.error(f"Error getting trending assets: {e}")
             return [{"error": f"Failed to get trending assets: {str(e)}"}]
     
-    async def _get_historical_data(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def _get_historical_data(self, arguments: Dict[str, Any], api_key: str = None) -> List[Dict[str, Any]]:
         """Get historical social and market data"""
         try:
             symbol = arguments.get("symbol", "BTC")
             timeframe = arguments.get("timeframe", "7d")
             
-            if not self.api_key:
+            if not api_key:
                 return [{
                     "type": "lunarcrush_historical_data",
                     "symbol": symbol,
@@ -431,7 +438,7 @@ class LunarCrushTool(MCPTool):
             url = f"{self.lunarcrush_base_url}/assets/{symbol}/time-series"
             params = {
                 "interval": timeframe,
-                "key": self.api_key
+                "key": api_key
             }
             
             async with session.get(url, params=params) as response:
@@ -466,13 +473,13 @@ class LunarCrushTool(MCPTool):
             logger.error(f"Error getting historical data: {e}")
             return [{"error": f"Failed to get historical data: {str(e)}"}]
     
-    async def _get_comparative_analysis(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def _get_comparative_analysis(self, arguments: Dict[str, Any], api_key: str = None) -> List[Dict[str, Any]]:
         """Compare multiple cryptocurrencies"""
         try:
             symbols = arguments.get("symbols", ["BTC", "ETH", "SOL"])
             timeframe = arguments.get("timeframe", "24h")
             
-            if not self.api_key:
+            if not api_key:
                 return [{
                     "type": "lunarcrush_comparative_analysis",
                     "symbols": symbols,
@@ -508,7 +515,7 @@ class LunarCrushTool(MCPTool):
                 params = {
                     "symbol": symbol,
                     "interval": timeframe,
-                    "key": self.api_key
+                    "key": api_key
                 }
                 
                 async with session.get(url, params=params) as response:
@@ -593,6 +600,10 @@ class CoinDeskTool(MCPTool):
                     "type": "integer",
                     "description": "Number of results to return",
                     "default": 10
+                },
+                "coindesk_api_key": {
+                    "type": "string",
+                    "description": "CoinDesk API key for real-time data (optional, will use sample data if not provided)"
                 }
             },
             "required": ["action"]
@@ -610,31 +621,53 @@ class CoinDeskTool(MCPTool):
             await self.session.close()
             self.session = None
     
-    async def execute(self, **kwargs) -> dict:
+    async def execute(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Execute the CoinDesk tool action."""
         try:
-            action = kwargs.get("action")
+            action = arguments.get("action")
+            
+            # Get API key from arguments or fall back to environment variable
+            api_key = arguments.get("coindesk_api_key") or self.api_key
             
             if action == "get_current_price":
-                return await self._get_current_price(**kwargs)
+                result = await self._get_current_price(arguments, api_key)
+                return [result]
             elif action == "get_historical_price":
-                return await self._get_historical_price(**kwargs)
+                result = await self._get_historical_price(arguments, api_key)
+                return [result]
             elif action == "get_bitcoin_price_index":
-                return await self._get_bitcoin_price_index(**kwargs)
+                result = await self._get_bitcoin_price_index(arguments, api_key)
+                return [result]
             elif action == "get_supported_currencies":
-                return await self._get_supported_currencies(**kwargs)
+                result = await self._get_supported_currencies(arguments, api_key)
+                return [result]
             elif action == "get_market_data":
-                return await self._get_market_data(**kwargs)
+                result = await self._get_market_data(arguments, api_key)
+                return [result]
             elif action == "get_news":
-                return await self._get_news(**kwargs)
+                result = await self._get_news(arguments, api_key)
+                return [result]
             else:
-                return {"error": f"Unknown action: {action}"}
+                return [{"error": f"Unknown action: {action}"}]
         finally:
             await self._cleanup_session()
     
-    async def _get_current_price(self, **kwargs) -> dict:
+    async def _get_current_price(self, arguments: Dict[str, Any], api_key: str = None) -> dict:
         """Get current Bitcoin price in specified currency."""
-        currency = kwargs.get("currency", "USD")
+        currency = arguments.get("currency", "USD")
+        
+        # If no API key, return sample data
+        if not api_key:
+            return {
+                "success": True,
+                "data": {
+                    "currency": currency,
+                    "price": 45000.0,
+                    "description": f"Bitcoin price in {currency}",
+                    "updated": datetime.now().isoformat(),
+                    "note": "Sample data. Provide CoinDesk API key for real-time data."
+                }
+            }
         
         try:
             session = await self._get_session()
@@ -661,16 +694,33 @@ class CoinDeskTool(MCPTool):
                 "error": f"Failed to get current price: {str(e)}"
             }
     
-    async def _get_historical_price(self, **kwargs) -> dict:
+    async def _get_historical_price(self, arguments: Dict[str, Any], api_key: str = None) -> dict:
         """Get historical Bitcoin price data."""
-        currency = kwargs.get("currency", "USD")
-        start_date = kwargs.get("start_date")
-        end_date = kwargs.get("end_date")
+        currency = arguments.get("currency", "USD")
+        start_date = arguments.get("start_date")
+        end_date = arguments.get("end_date")
         
         if not start_date or not end_date:
             # Default to last 30 days if no dates provided
             end_date = datetime.now().strftime("%Y-%m-%d")
             start_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+        
+        # If no API key, return sample data
+        if not api_key:
+            return {
+                "success": True,
+                "data": {
+                    "currency": currency,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "prices": {
+                        "2024-01-01": 42000.0,
+                        "2024-01-15": 45000.0,
+                        "2024-01-30": 48000.0
+                    },
+                    "note": "Sample data. Provide CoinDesk API key for real-time data."
+                }
+            }
         
         try:
             session = await self._get_session()
@@ -703,8 +753,25 @@ class CoinDeskTool(MCPTool):
                 "error": f"Failed to get historical price data: {str(e)}"
             }
     
-    async def _get_bitcoin_price_index(self, **kwargs) -> dict:
+    async def _get_bitcoin_price_index(self, arguments: Dict[str, Any], api_key: str = None) -> dict:
         """Get Bitcoin Price Index (BPI) data."""
+        
+        # If no API key, return sample data
+        if not api_key:
+            return {
+                "success": True,
+                "data": {
+                    "bpi": {
+                        "USD": {"code": "USD", "rate": "45,000.00", "description": "United States Dollar", "rate_float": 45000.0},
+                        "EUR": {"code": "EUR", "rate": "41,500.00", "description": "Euro", "rate_float": 41500.0},
+                        "GBP": {"code": "GBP", "rate": "35,800.00", "description": "British Pound Sterling", "rate_float": 35800.0}
+                    },
+                    "chart_name": "Bitcoin",
+                    "updated": datetime.now().isoformat(),
+                    "note": "Sample data. Provide CoinDesk API key for real-time data."
+                }
+            }
+        
         try:
             session = await self._get_session()
             url = f"{self.coindesk_base_url}/bpi/currentprice.json"
@@ -730,8 +797,26 @@ class CoinDeskTool(MCPTool):
                 "error": f"Failed to get Bitcoin Price Index: {str(e)}"
             }
     
-    async def _get_supported_currencies(self, **kwargs) -> dict:
+    async def _get_supported_currencies(self, arguments: Dict[str, Any], api_key: str = None) -> dict:
         """Get list of supported currencies."""
+        
+        # If no API key, return sample data
+        if not api_key:
+            return {
+                "success": True,
+                "data": {
+                    "currencies": [
+                        {"currency": "USD", "country": "United States"},
+                        {"currency": "EUR", "country": "European Union"},
+                        {"currency": "GBP", "country": "United Kingdom"},
+                        {"currency": "JPY", "country": "Japan"},
+                        {"currency": "CNY", "country": "China"}
+                    ],
+                    "count": 5,
+                    "note": "Sample data. Provide CoinDesk API key for real-time data."
+                }
+            }
+        
         try:
             session = await self._get_session()
             url = f"{self.coindesk_base_url}/bpi/supported-currencies.json"
@@ -754,29 +839,34 @@ class CoinDeskTool(MCPTool):
                 "error": f"Failed to get supported currencies: {str(e)}"
             }
     
-    async def _get_market_data(self, **kwargs) -> dict:
+    async def _get_market_data(self, arguments: Dict[str, Any], api_key: str = None) -> dict:
         """Get additional market data (sample implementation)."""
         # Note: CoinDesk's free API is limited, so this returns sample data
         # For real market data, you'd need their premium API
-        return {
-            "success": True,
-            "data": {
-                "market_cap": "$1,234,567,890,123",
-                "24h_volume": "$45,678,901,234",
-                "24h_change": "+2.34%",
-                "7d_change": "+5.67%",
-                "dominance": "48.2%",
-                "note": "This is sample data. For real market data, consider CoinDesk's premium API."
+        
+        # If no API key, return sample data
+        if not api_key:
+            return {
+                "success": True,
+                "data": {
+                    "market_cap": "$1,234,567,890,123",
+                    "24h_volume": "$45,678,901,234",
+                    "24h_change": "+2.34%",
+                    "7d_change": "+5.67%",
+                    "dominance": "48.2%",
+                    "note": "Sample data. Provide CoinDesk API key for real-time data."
+                }
             }
-        }
     
-    async def _get_news(self, **kwargs) -> dict:
+    async def _get_news(self, arguments: Dict[str, Any], api_key: str = None) -> dict:
         """Get CoinDesk news (sample implementation)."""
         # Note: CoinDesk's news API requires premium access
         # This returns sample news data
-        limit = kwargs.get("limit", 5)
+        limit = arguments.get("limit", 5)
         
-        sample_news = [
+        # If no API key, return sample data
+        if not api_key:
+            sample_news = [
             {
                 "title": "Bitcoin Reaches New All-Time High",
                 "summary": "Bitcoin has reached a new all-time high, surpassing previous records.",
@@ -797,14 +887,29 @@ class CoinDeskTool(MCPTool):
             }
         ]
         
-        return {
-            "success": True,
-            "data": {
-                "news": sample_news[:limit],
-                "count": min(limit, len(sample_news)),
-                "note": "This is sample news data. For real news, consider CoinDesk's premium API."
+            return {
+                "success": True,
+                "data": {
+                    "news": sample_news[:limit],
+                    "count": min(limit, len(sample_news)),
+                    "note": "Sample data. Provide CoinDesk API key for real-time data."
+                }
             }
-        }
+        
+        # If API key is provided, try to get real data
+        try:
+            session = await self._get_session()
+            # Note: CoinDesk news API requires premium access
+            # This would be the real API call implementation
+            return {
+                "success": False,
+                "error": "CoinDesk news API requires premium access. Using sample data instead."
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to get news: {str(e)}"
+            }
 
 
 class PumpNewsTool(MCPTool):
@@ -812,6 +917,9 @@ class PumpNewsTool(MCPTool):
         self.session = None
         self.pumpnews_api_url = "https://api.pumpnews.com/v1"
         self.api_key = os.getenv("PUMPNEWS_API_KEY")
+        # Alternative APIs for fallback
+        self.coingecko_api_url = "https://api.coingecko.com/api/v3"
+        self.cryptocompare_api_url = "https://min-api.cryptocompare.com/data"
     
     @property
     def name(self) -> str:
@@ -911,34 +1019,50 @@ class PumpNewsTool(MCPTool):
             
             session = await self._get_session()
             
-            # Build API URL
-            url = f"{self.pumpnews_api_url}/news"
-            params = {"limit": limit, "category": category}
-            if symbol:
-                params["symbol"] = symbol
-            
-            headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
-            
-            async with session.get(url, params=params, headers=headers) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {
-                        "success": True,
-                        "data": {
-                            "news": data.get("news", []),
-                            "count": len(data.get("news", [])),
-                            "category": category,
-                            "symbol": symbol,
-                            "timestamp": datetime.now().isoformat()
+            # Try PumpNews API first
+            try:
+                url = f"{self.pumpnews_api_url}/news"
+                params = {"limit": limit, "category": category}
+                if symbol:
+                    params["symbol"] = symbol
+                
+                headers = {}
+                if self.api_key:
+                    headers["Authorization"] = f"Bearer {self.api_key}"
+                
+                async with session.get(url, params=params, headers=headers, allow_redirects=False) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        return {
+                            "success": True,
+                            "data": {
+                                "news": data.get("news", []),
+                                "count": len(data.get("news", [])),
+                                "category": category,
+                                "symbol": symbol,
+                                "timestamp": datetime.now().isoformat()
+                            }
                         }
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"Failed to fetch news: {response.status}"
-                    }
+                    elif response.status in [301, 302, 307, 308]:
+                        # API is redirecting (likely to domain parking page)
+                        logger.warning(f"PumpNews API redirecting: {response.status} -> {response.headers.get('location', 'unknown')}")
+                    else:
+                        logger.warning(f"PumpNews API returned status: {response.status}")
+            except Exception as pump_error:
+                logger.warning(f"PumpNews API failed: {pump_error}")
+            
+            # PumpNews API is not available - return clear error
+            return {
+                "success": False,
+                "error": "PumpNews API is currently unavailable. The service appears to be permanently shut down.",
+                "details": {
+                    "api_endpoint": f"{self.pumpnews_api_url}/news",
+                    "status": "Service redirects to domain parking page",
+                    "recommendation": "This MCP tool requires PumpNews API to be operational. Please check if the service has been restored or contact the service provider.",
+                    "timestamp": datetime.now().isoformat()
+                }
+            }
+            
         except Exception as e:
             return {
                 "success": False,
@@ -959,35 +1083,52 @@ class PumpNewsTool(MCPTool):
             
             session = await self._get_session()
             
-            url = f"{self.pumpnews_api_url}/pump-detection"
-            params = {"symbol": symbol, "timeframe": timeframe}
-            
-            headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
-            
-            async with session.get(url, params=params, headers=headers) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {
-                        "success": True,
-                        "symbol": symbol,
-                        "timeframe": timeframe,
-                        "data": {
-                            "pump_score": data.get("pump_score"),
-                            "risk_level": data.get("risk_level"),
-                            "volume_spike": data.get("volume_spike"),
-                            "price_change": data.get("price_change"),
-                            "social_activity": data.get("social_activity"),
-                            "indicators": data.get("indicators", []),
-                            "timestamp": datetime.now().isoformat()
+            # Try PumpNews API first
+            try:
+                url = f"{self.pumpnews_api_url}/pump-detection"
+                params = {"symbol": symbol, "timeframe": timeframe}
+                
+                headers = {}
+                if self.api_key:
+                    headers["Authorization"] = f"Bearer {self.api_key}"
+                
+                async with session.get(url, params=params, headers=headers, allow_redirects=False) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        return {
+                            "success": True,
+                            "symbol": symbol,
+                            "timeframe": timeframe,
+                            "data": {
+                                "pump_score": data.get("pump_score"),
+                                "risk_level": data.get("risk_level"),
+                                "volume_spike": data.get("volume_spike"),
+                                "price_change": data.get("price_change"),
+                                "social_activity": data.get("social_activity"),
+                                "indicators": data.get("indicators", []),
+                                "timestamp": datetime.now().isoformat()
+                            }
                         }
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"Failed to fetch pump detection: {response.status}"
-                    }
+                    elif response.status in [301, 302, 307, 308]:
+                        # API is redirecting (likely to domain parking page)
+                        logger.warning(f"PumpNews API redirecting: {response.status} -> {response.headers.get('location', 'unknown')}")
+                    else:
+                        logger.warning(f"PumpNews API returned status: {response.status}")
+            except Exception as pump_error:
+                logger.warning(f"PumpNews API failed: {pump_error}")
+            
+            # PumpNews API is not available - return clear error
+            return {
+                "success": False,
+                "error": "PumpNews API is currently unavailable. The service appears to be permanently shut down.",
+                "details": {
+                    "api_endpoint": f"{self.pumpnews_api_url}/pump-detection",
+                    "status": "Service redirects to domain parking page",
+                    "recommendation": "This MCP tool requires PumpNews API to be operational. Please check if the service has been restored or contact the service provider.",
+                    "timestamp": datetime.now().isoformat()
+                }
+            }
+            
         except Exception as e:
             return {
                 "success": False,
@@ -1008,36 +1149,48 @@ class PumpNewsTool(MCPTool):
             
             session = await self._get_session()
             
-            url = f"{self.pumpnews_api_url}/social-sentiment"
-            params = {"symbol": symbol, "timeframe": timeframe}
-            
-            headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
-            
-            async with session.get(url, params=params, headers=headers) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {
-                        "success": True,
-                        "symbol": symbol,
-                        "timeframe": timeframe,
-                        "data": {
-                            "overall_sentiment": data.get("overall_sentiment"),
-                            "sentiment_score": data.get("sentiment_score"),
-                            "twitter_sentiment": data.get("twitter_sentiment"),
-                            "reddit_sentiment": data.get("reddit_sentiment"),
-                            "telegram_sentiment": data.get("telegram_sentiment"),
-                            "mentions_count": data.get("mentions_count"),
-                            "trending_topics": data.get("trending_topics", []),
-                            "timestamp": datetime.now().isoformat()
+            # Try PumpNews API first
+            try:
+                url = f"{self.pumpnews_api_url}/social-sentiment"
+                params = {"symbol": symbol, "timeframe": timeframe}
+                
+                headers = {}
+                if self.api_key:
+                    headers["Authorization"] = f"Bearer {self.api_key}"
+                
+                async with session.get(url, params=params, headers=headers) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        return {
+                            "success": True,
+                            "symbol": symbol,
+                            "timeframe": timeframe,
+                            "data": {
+                                "overall_sentiment": data.get("overall_sentiment"),
+                                "sentiment_score": data.get("sentiment_score"),
+                                "twitter_sentiment": data.get("twitter_sentiment"),
+                                "reddit_sentiment": data.get("reddit_sentiment"),
+                                "telegram_sentiment": data.get("telegram_sentiment"),
+                                "mentions_count": data.get("mentions_count"),
+                                "trending_topics": data.get("trending_topics", []),
+                                "timestamp": datetime.now().isoformat()
+                            }
                         }
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"Failed to fetch social sentiment: {response.status}"
-                    }
+            except Exception as pump_error:
+                logger.warning(f"PumpNews API failed: {pump_error}")
+            
+            # PumpNews API is not available - return clear error
+            return {
+                "success": False,
+                "error": "PumpNews API is currently unavailable. The service appears to be permanently shut down.",
+                "details": {
+                    "api_endpoint": f"{self.pumpnews_api_url}/social-sentiment",
+                    "status": "Service redirects to domain parking page",
+                    "recommendation": "This MCP tool requires PumpNews API to be operational. Please check if the service has been restored or contact the service provider.",
+                    "timestamp": datetime.now().isoformat()
+                }
+            }
+            
         except Exception as e:
             return {
                 "success": False,
@@ -1052,31 +1205,43 @@ class PumpNewsTool(MCPTool):
             
             session = await self._get_session()
             
-            url = f"{self.pumpnews_api_url}/market-alerts"
-            params = {"limit": limit, "timeframe": timeframe}
-            
-            headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
-            
-            async with session.get(url, params=params, headers=headers) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {
-                        "success": True,
-                        "timeframe": timeframe,
-                        "data": {
-                            "alerts": data.get("alerts", []),
-                            "count": len(data.get("alerts", [])),
-                            "alert_types": data.get("alert_types", []),
-                            "timestamp": datetime.now().isoformat()
+            # Try PumpNews API first
+            try:
+                url = f"{self.pumpnews_api_url}/market-alerts"
+                params = {"limit": limit, "timeframe": timeframe}
+                
+                headers = {}
+                if self.api_key:
+                    headers["Authorization"] = f"Bearer {self.api_key}"
+                
+                async with session.get(url, params=params, headers=headers) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        return {
+                            "success": True,
+                            "timeframe": timeframe,
+                            "data": {
+                                "alerts": data.get("alerts", []),
+                                "count": len(data.get("alerts", [])),
+                                "alert_types": data.get("alert_types", []),
+                                "timestamp": datetime.now().isoformat()
+                            }
                         }
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"Failed to fetch market alerts: {response.status}"
-                    }
+            except Exception as pump_error:
+                logger.warning(f"PumpNews API failed: {pump_error}")
+            
+            # PumpNews API is not available - return clear error
+            return {
+                "success": False,
+                "error": "PumpNews API is currently unavailable. The service appears to be permanently shut down.",
+                "details": {
+                    "api_endpoint": f"{self.pumpnews_api_url}/market-alerts",
+                    "status": "Service redirects to domain parking page",
+                    "recommendation": "This MCP tool requires PumpNews API to be operational. Please check if the service has been restored or contact the service provider.",
+                    "timestamp": datetime.now().isoformat()
+                }
+            }
+            
         except Exception as e:
             return {
                 "success": False,
@@ -1091,31 +1256,43 @@ class PumpNewsTool(MCPTool):
             
             session = await self._get_session()
             
-            url = f"{self.pumpnews_api_url}/trending"
-            params = {"limit": limit, "timeframe": timeframe}
-            
-            headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
-            
-            async with session.get(url, params=params, headers=headers) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {
-                        "success": True,
-                        "timeframe": timeframe,
-                        "data": {
-                            "trending_coins": data.get("trending_coins", []),
-                            "count": len(data.get("trending_coins", [])),
-                            "trending_reasons": data.get("trending_reasons", []),
-                            "timestamp": datetime.now().isoformat()
+            # Try PumpNews API first
+            try:
+                url = f"{self.pumpnews_api_url}/trending"
+                params = {"limit": limit, "timeframe": timeframe}
+                
+                headers = {}
+                if self.api_key:
+                    headers["Authorization"] = f"Bearer {self.api_key}"
+                
+                async with session.get(url, params=params, headers=headers) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        return {
+                            "success": True,
+                            "timeframe": timeframe,
+                            "data": {
+                                "trending_coins": data.get("trending_coins", []),
+                                "count": len(data.get("trending_coins", [])),
+                                "trending_reasons": data.get("trending_reasons", []),
+                                "timestamp": datetime.now().isoformat()
+                            }
                         }
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"Failed to fetch trending coins: {response.status}"
-                    }
+            except Exception as pump_error:
+                logger.warning(f"PumpNews API failed: {pump_error}")
+            
+            # PumpNews API is not available - return clear error
+            return {
+                "success": False,
+                "error": "PumpNews API is currently unavailable. The service appears to be permanently shut down.",
+                "details": {
+                    "api_endpoint": f"{self.pumpnews_api_url}/trending",
+                    "status": "Service redirects to domain parking page",
+                    "recommendation": "This MCP tool requires PumpNews API to be operational. Please check if the service has been restored or contact the service provider.",
+                    "timestamp": datetime.now().isoformat()
+                }
+            }
+            
         except Exception as e:
             return {
                 "success": False,
@@ -1136,35 +1313,47 @@ class PumpNewsTool(MCPTool):
             
             session = await self._get_session()
             
-            url = f"{self.pumpnews_api_url}/volume-analysis"
-            params = {"symbol": symbol, "timeframe": timeframe}
-            
-            headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
-            
-            async with session.get(url, params=params, headers=headers) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {
-                        "success": True,
-                        "symbol": symbol,
-                        "timeframe": timeframe,
-                        "data": {
-                            "current_volume": data.get("current_volume"),
-                            "average_volume": data.get("average_volume"),
-                            "volume_change": data.get("volume_change"),
-                            "volume_spike": data.get("volume_spike"),
-                            "unusual_activity": data.get("unusual_activity"),
-                            "volume_patterns": data.get("volume_patterns", []),
-                            "timestamp": datetime.now().isoformat()
+            # Try PumpNews API first
+            try:
+                url = f"{self.pumpnews_api_url}/volume-analysis"
+                params = {"symbol": symbol, "timeframe": timeframe}
+                
+                headers = {}
+                if self.api_key:
+                    headers["Authorization"] = f"Bearer {self.api_key}"
+                
+                async with session.get(url, params=params, headers=headers) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        return {
+                            "success": True,
+                            "symbol": symbol,
+                            "timeframe": timeframe,
+                            "data": {
+                                "current_volume": data.get("current_volume"),
+                                "average_volume": data.get("average_volume"),
+                                "volume_change": data.get("volume_change"),
+                                "volume_spike": data.get("volume_spike"),
+                                "unusual_activity": data.get("unusual_activity"),
+                                "volume_patterns": data.get("volume_patterns", []),
+                                "timestamp": datetime.now().isoformat()
+                            }
                         }
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"Failed to fetch volume analysis: {response.status}"
-                    }
+            except Exception as pump_error:
+                logger.warning(f"PumpNews API failed: {pump_error}")
+            
+            # PumpNews API is not available - return clear error
+            return {
+                "success": False,
+                "error": "PumpNews API is currently unavailable. The service appears to be permanently shut down.",
+                "details": {
+                    "api_endpoint": f"{self.pumpnews_api_url}/volume-analysis",
+                    "status": "Service redirects to domain parking page",
+                    "recommendation": "This MCP tool requires PumpNews API to be operational. Please check if the service has been restored or contact the service provider.",
+                    "timestamp": datetime.now().isoformat()
+                }
+            }
+            
         except Exception as e:
             return {
                 "success": False,
@@ -1179,34 +1368,46 @@ class PumpNewsTool(MCPTool):
             
             session = await self._get_session()
             
-            url = f"{self.pumpnews_api_url}/community-insights"
-            params = {"limit": limit}
-            if symbol:
-                params["symbol"] = symbol
-            
-            headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
-            
-            async with session.get(url, params=params, headers=headers) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {
-                        "success": True,
-                        "symbol": symbol,
-                        "data": {
-                            "insights": data.get("insights", []),
-                            "predictions": data.get("predictions", []),
-                            "community_ratings": data.get("community_ratings", []),
-                            "discussion_topics": data.get("discussion_topics", []),
-                            "timestamp": datetime.now().isoformat()
+            # Try PumpNews API first
+            try:
+                url = f"{self.pumpnews_api_url}/community-insights"
+                params = {"limit": limit}
+                if symbol:
+                    params["symbol"] = symbol
+                
+                headers = {}
+                if self.api_key:
+                    headers["Authorization"] = f"Bearer {self.api_key}"
+                
+                async with session.get(url, params=params, headers=headers) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        return {
+                            "success": True,
+                            "symbol": symbol,
+                            "data": {
+                                "insights": data.get("insights", []),
+                                "predictions": data.get("predictions", []),
+                                "community_ratings": data.get("community_ratings", []),
+                                "discussion_topics": data.get("discussion_topics", []),
+                                "timestamp": datetime.now().isoformat()
+                            }
                         }
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"Failed to fetch community insights: {response.status}"
-                    }
+            except Exception as pump_error:
+                logger.warning(f"PumpNews API failed: {pump_error}")
+            
+            # PumpNews API is not available - return clear error
+            return {
+                "success": False,
+                "error": "PumpNews API is currently unavailable. The service appears to be permanently shut down.",
+                "details": {
+                    "api_endpoint": f"{self.pumpnews_api_url}/community-insights",
+                    "status": "Service redirects to domain parking page",
+                    "recommendation": "This MCP tool requires PumpNews API to be operational. Please check if the service has been restored or contact the service provider.",
+                    "timestamp": datetime.now().isoformat()
+                }
+            }
+            
         except Exception as e:
             return {
                 "success": False,
@@ -1227,32 +1428,44 @@ class PumpNewsTool(MCPTool):
             
             session = await self._get_session()
             
-            url = f"{self.pumpnews_api_url}/portfolio-alerts"
-            params = {"symbols": ",".join(symbols), "limit": limit}
-            
-            headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
-            
-            async with session.get(url, params=params, headers=headers) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {
-                        "success": True,
-                        "symbols": symbols,
-                        "data": {
-                            "alerts": data.get("alerts", []),
-                            "price_alerts": data.get("price_alerts", []),
-                            "news_alerts": data.get("news_alerts", []),
-                            "volume_alerts": data.get("volume_alerts", []),
-                            "timestamp": datetime.now().isoformat()
+            # Try PumpNews API first
+            try:
+                url = f"{self.pumpnews_api_url}/portfolio-alerts"
+                params = {"symbols": ",".join(symbols), "limit": limit}
+                
+                headers = {}
+                if self.api_key:
+                    headers["Authorization"] = f"Bearer {self.api_key}"
+                
+                async with session.get(url, params=params, headers=headers) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        return {
+                            "success": True,
+                            "symbols": symbols,
+                            "data": {
+                                "alerts": data.get("alerts", []),
+                                "price_alerts": data.get("price_alerts", []),
+                                "news_alerts": data.get("news_alerts", []),
+                                "volume_alerts": data.get("volume_alerts", []),
+                                "timestamp": datetime.now().isoformat()
+                            }
                         }
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"Failed to fetch portfolio alerts: {response.status}"
-                    }
+            except Exception as pump_error:
+                logger.warning(f"PumpNews API failed: {pump_error}")
+            
+            # PumpNews API is not available - return clear error
+            return {
+                "success": False,
+                "error": "PumpNews API is currently unavailable. The service appears to be permanently shut down.",
+                "details": {
+                    "api_endpoint": f"{self.pumpnews_api_url}/portfolio-alerts",
+                    "status": "Service redirects to domain parking page",
+                    "recommendation": "This MCP tool requires PumpNews API to be operational. Please check if the service has been restored or contact the service provider.",
+                    "timestamp": datetime.now().isoformat()
+                }
+            }
+            
         except Exception as e:
             return {
                 "success": False,

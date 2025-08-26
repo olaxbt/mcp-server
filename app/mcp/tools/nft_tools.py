@@ -132,8 +132,40 @@ class NFTMarketplaceTool(MCPTool):
             return [{"error": f"Failed to get collection info: {str(e)}"}]
     
     async def _get_opensea_collection_info(self, collection_slug: str, chain: str) -> List[Dict[str, Any]]:
-        """Get collection info from OpenSea API"""
+        """Get collection info from OpenSea API (with fallback to Reservoir)"""
         try:
+            # Try Reservoir API first (more reliable)
+            reservoir_url = f"{self.api_endpoints[chain]['reservoir']}/collections/v5?slug={collection_slug}"
+            headers = {}
+            
+            if self.reservoir_api_key:
+                headers["x-api-key"] = self.reservoir_api_key
+            
+            async with self.session.get(reservoir_url, headers=headers) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    collections = data.get("collections", [])
+                    
+                    if collections:
+                        collection = collections[0]
+                        collection_info = {
+                            "collection_slug": collection_slug,
+                            "chain": chain,
+                            "name": collection.get("name", ""),
+                            "description": collection.get("description", ""),
+                            "total_supply": collection.get("tokenCount", 0),
+                            "owners": collection.get("ownerCount", 0),
+                            "floor_price": collection.get("floor", {}).get("value", 0),
+                            "total_volume": collection.get("volume", {}).get("allTime", 0),
+                            "created_date": collection.get("createdAt", ""),
+                            "external_url": collection.get("externalUrl", ""),
+                            "image_url": collection.get("image", ""),
+                            "banner_image_url": collection.get("banner", ""),
+                            "note": "Data via Reservoir API (more reliable than direct OpenSea)"
+                        }
+                        return [{"collection_info": collection_info}]
+            
+            # Fallback to OpenSea API (may be blocked)
             url = f"{self.api_endpoints[chain]['opensea']}/collection/{collection_slug}"
             headers = {}
             
@@ -162,10 +194,10 @@ class NFTMarketplaceTool(MCPTool):
                     
                     return [{"collection_info": collection_info}]
                 else:
-                    return [{"error": f"OpenSea API request failed: {response.status}"}]
+                    return [{"error": f"OpenSea API blocked/404. Try using Reservoir API or check collection slug format. Status: {response.status}"}]
         except Exception as e:
             logger.error(f"OpenSea collection info error: {e}")
-            return [{"error": f"OpenSea API error: {str(e)}"}]
+            return [{"error": f"OpenSea API error: {str(e)}. Try using Reservoir API instead."}]
     
     async def _get_magic_eden_collection_info(self, collection_slug: str) -> List[Dict[str, Any]]:
         """Get collection info from Magic Eden API"""
@@ -214,8 +246,46 @@ class NFTMarketplaceTool(MCPTool):
             return [{"error": f"Failed to get floor price: {str(e)}"}]
     
     async def _get_opensea_floor_price(self, collection_slug: str, chain: str) -> List[Dict[str, Any]]:
-        """Get floor price from OpenSea"""
+        """Get floor price from OpenSea (with fallback to Reservoir)"""
         try:
+            # Try Reservoir API first (more reliable)
+            reservoir_url = f"{self.api_endpoints[chain]['reservoir']}/collections/v5?slug={collection_slug}"
+            headers = {}
+            
+            if self.reservoir_api_key:
+                headers["x-api-key"] = self.reservoir_api_key
+            
+            async with self.session.get(reservoir_url, headers=headers) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    collections = data.get("collections", [])
+                    
+                    if collections:
+                        collection = collections[0]
+                        
+                        # Get floor price from floorAsk
+                        floor_price = 0
+                        if collection.get("floorAsk") and collection.get("floorAsk", {}).get("price"):
+                            floor_price = collection["floorAsk"]["price"]["amount"]["decimal"]
+                        
+                        # Get floor sale data
+                        floor_sale_1d = collection.get("floorSale", {}).get("1day", 0)
+                        floor_sale_7d = collection.get("floorSale", {}).get("7day", 0)
+                        
+                        floor_data = {
+                            "collection_slug": collection_slug,
+                            "chain": chain,
+                            "floor_price": floor_price,
+                            "floor_price_usd": floor_price,  # Reservoir returns in ETH
+                            "last_updated": datetime.now().isoformat(),
+                            "change_24h": floor_sale_1d,
+                            "change_7d": floor_sale_7d,
+                            "marketplace": "Reservoir (OpenSea data)",
+                            "note": f"Floor price: {floor_price} ETH, 24h floor: {floor_sale_1d} ETH, 7d floor: {floor_sale_7d} ETH"
+                        }
+                        return [{"floor_price": floor_data}]
+            
+            # Fallback to OpenSea API (may be blocked)
             url = f"{self.api_endpoints[chain]['opensea']}/collection/{collection_slug}/stats"
             headers = {}
             
@@ -231,7 +301,7 @@ class NFTMarketplaceTool(MCPTool):
                         "collection_slug": collection_slug,
                         "chain": chain,
                         "floor_price": stats.get("floor_price", 0),
-                        "floor_price_usd": stats.get("floor_price", 0),  # OpenSea returns in ETH
+                        "floor_price_usd": stats.get("floor_price", 0),
                         "last_updated": datetime.now().isoformat(),
                         "change_24h": stats.get("one_day_change", 0),
                         "change_7d": stats.get("seven_day_change", 0),
@@ -240,10 +310,10 @@ class NFTMarketplaceTool(MCPTool):
                     
                     return [{"floor_price": floor_data}]
                 else:
-                    return [{"error": f"OpenSea floor price request failed: {response.status}"}]
+                    return [{"error": f"OpenSea API blocked/404. Try using Reservoir API or check collection slug format. Status: {response.status}"}]
         except Exception as e:
             logger.error(f"OpenSea floor price error: {e}")
-            return [{"error": f"OpenSea API error: {str(e)}"}]
+            return [{"error": f"OpenSea API error: {str(e)}. Try using Reservoir API instead."}]
     
     async def _get_magic_eden_floor_price(self, collection_slug: str) -> List[Dict[str, Any]]:
         """Get floor price from Magic Eden"""

@@ -30,16 +30,15 @@ async def test_crypto_price_tool():
     # Test Bitcoin price
     result = await tool.execute({
         "coin_id": "bitcoin",
-        "vs_currency": "usd",
-        "include_market_data": True,
-        "include_24hr_change": True
+        "currency": "usd",
+        "include_market_data": True
     })
     print(f"Bitcoin Price: {json.dumps(result, indent=2)}")
     
     # Test Ethereum price
     result = await tool.execute({
         "coin_id": "ethereum",
-        "vs_currency": "usd"
+        "currency": "usd"
     })
     print(f"Ethereum Price: {json.dumps(result, indent=2)}")
 

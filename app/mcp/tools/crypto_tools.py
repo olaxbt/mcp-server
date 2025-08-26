@@ -48,7 +48,7 @@ class CryptoPriceTool(MCPTool):
                 },
                 "include_market_data": {
                     "type": "boolean",
-                    "description": "Include additional market data",
+                    "description": "Include additional market data (market cap, volume, 24h change)",
                     "default": True
                 }
             },
@@ -77,10 +77,10 @@ class CryptoPriceTool(MCPTool):
             params = {
                 "ids": coin_id,
                 "vs_currencies": currency,
-                "include_market_cap": include_market_data,
-                "include_24hr_vol": include_market_data,
-                "include_24hr_change": include_market_data,
-                "include_last_updated_at": True
+                "include_market_cap": "true" if include_market_data else "false",
+                "include_24hr_vol": "true" if include_market_data else "false",
+                "include_24hr_change": "true" if include_market_data else "false",
+                "include_last_updated_at": "true"
             }
             
             async with self.session.get(url, params=params) as response:
@@ -585,12 +585,25 @@ class CryptoNewsTool(MCPTool):
             # Create new DDGS instance
             ddgs = DDGS()
             
-            # Search for crypto news
-            search_results = list(ddgs.news(
-                keywords=query,
-                max_results=max_results,
-                time=time_filter
-            ))
+            # Search for crypto news using text search with only supported parameters
+            search_kwargs = {
+                "keywords": query,
+                "max_results": max_results
+            }
+            
+            # Note: time_filter is not supported by current DDGS version
+            # We'll search for recent news by including "recent" or "latest" in the query
+            if time_filter and time_filter in ["d", "w", "m", "y"]:
+                time_keywords = {
+                    "d": "today OR latest",
+                    "w": "this week OR recent", 
+                    "m": "this month OR recent",
+                    "y": "this year OR recent"
+                }
+                enhanced_query = f"{query} {time_keywords.get(time_filter, 'recent')}"
+                search_kwargs["keywords"] = enhanced_query
+            
+            search_results = list(ddgs.text(**search_kwargs))
             
             processed_results = []
             for result in search_results:
@@ -600,7 +613,7 @@ class CryptoNewsTool(MCPTool):
                         "link": result.get("link", ""),
                         "snippet": result.get("body", ""),
                         "source": result.get("source", ""),
-                        "published_date": result.get("date", ""),
+                        "published_date": result.get("published", ""),
                         "query": query
                     }
                     

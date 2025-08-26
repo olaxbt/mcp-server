@@ -20,13 +20,14 @@ logger = logging.getLogger(__name__)
 class AaveTool(MCPTool):
     def __init__(self):
         self.session = None
-        self.aave_v3_api_url = "https://api.aave.com/v3"
-        self.subgraph_url = "https://api.thegraph.com/subgraphs/name/aave/protocol-v3"
+        # Use working, current API endpoints
+        self.defillama_api_url = "https://api.llama.fi"
+        self.coingecko_api_url = "https://api.coingecko.com/api/v3"
         self.supported_networks = {
-            "ethereum": "mainnet",
-            "polygon": "polygon",
+            "ethereum": "ethereum",
+            "polygon": "polygon", 
             "avalanche": "avalanche",
-            "arbitrum": "arbitrum-one",
+            "arbitrum": "arbitrum",
             "optimism": "optimism",
             "fantom": "fantom"
         }
@@ -75,6 +76,10 @@ class AaveTool(MCPTool):
                     "type": "integer",
                     "description": "Number of days for historical data",
                     "default": 30
+                },
+                "aave_api_key": {
+                    "type": "string",
+                    "description": "Optional Aave API key for accessing user-specific data"
                 }
             },
             "required": ["action"]
@@ -185,73 +190,88 @@ class AaveTool(MCPTool):
                     "error": "user_address is required for position queries"
                 }
             
-            session = await self._get_session()
-            
-            # Query user data from Aave V3 API
-            url = f"{self.aave_v3_api_url}/user/{user_address}"
-            
-            async with session.get(url) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    
-                    user_data = data.get("userData", {})
-                    reserves_data = data.get("reservesData", [])
-                    
-                    # Calculate health factor
-                    health_factor = user_data.get("healthFactor", "0")
-                    
-                    # Format user positions
-                    deposits = []
-                    borrows = []
-                    
-                    for reserve in reserves_data:
-                        current_atoken_balance = float(reserve.get("currentATokenBalance", 0))
-                        current_variable_debt = float(reserve.get("currentVariableDebt", 0))
-                        current_stable_debt = float(reserve.get("currentStableDebt", 0))
+            try:
+                session = await self._get_session()
+                aave_api_key = kwargs.get("aave_api_key")
+                
+                # If API key is provided, try to get real user data from Aave
+                if aave_api_key:
+                    try:
+                        # Try to use Aave API with the provided key
+                        # Note: This would need the correct Aave API endpoint
+                        aave_api_url = "https://api.aave.com/v3"  # This might need updating
+                        headers = {"Authorization": f"Bearer {aave_api_key}"}
                         
-                        if current_atoken_balance > 0:
-                            deposits.append({
-                                "asset": reserve.get("symbol"),
-                                "balance": reserve.get("currentATokenBalance"),
-                                "balance_usd": reserve.get("currentATokenBalanceUSD"),
-                                "rate": reserve.get("liquidityRate")
-                            })
+                        # Try to get user data
+                        user_url = f"{aave_api_url}/user/{user_address}"
+                        async with session.get(user_url, headers=headers) as response:
+                            if response.status == 200:
+                                user_data = await response.json()
+                                # Process real user data here
+                                return {
+                                    "success": True,
+                                    "user_address": user_address,
+                                    "network": network,
+                                    "data": {
+                                        "protocol": "Aave",
+                                        "source": "Aave API",
+                                        "user_data": user_data,
+                                        "timestamp": datetime.now().isoformat()
+                                    }
+                                }
+                            else:
+                                logger.warning(f"Aave API returned {response.status}, falling back to DefiLlama")
+                    except Exception as aave_error:
+                        logger.warning(f"Aave API failed with key, falling back to DefiLlama: {aave_error}")
+                
+                # Fallback to DefiLlama API for protocol-level data
+                url = f"{self.defillama_api_url}/protocol/aave"
+                
+                async with session.get(url) as response:
+                    if response.status == 200:
+                        data = await response.json()
                         
-                        if current_variable_debt > 0 or current_stable_debt > 0:
-                            borrows.append({
-                                "asset": reserve.get("symbol"),
-                                "variable_debt": reserve.get("currentVariableDebt"),
-                                "stable_debt": reserve.get("currentStableDebt"),
-                                "total_debt_usd": reserve.get("currentTotalDebtUSD"),
-                                "variable_rate": reserve.get("variableBorrowRate"),
-                                "stable_rate": reserve.get("stableBorrowRate")
-                            })
-                    
-                    return {
-                        "success": True,
-                        "user_address": user_address,
-                        "network": network,
-                        "data": {
-                            "health_factor": health_factor,
-                            "total_collateral_usd": user_data.get("totalCollateralUSD"),
-                            "total_debt_usd": user_data.get("totalBorrowsUSD"),
-                            "available_borrows_usd": user_data.get("availableBorrowsUSD"),
-                            "current_liquidation_threshold": user_data.get("currentLiquidationThreshold"),
-                            "deposits": deposits,
-                            "borrows": borrows,
-                            "timestamp": datetime.now().isoformat()
+                        # Get protocol TVL and basic info
+                        tvl = data.get("tvl", [])
+                        current_network_tvl = 0
+                        
+                        for chain_tvl in tvl:
+                            if chain_tvl.get("chain") == network:
+                                current_network_tvl = chain_tvl.get("tvl", 0)
+                                break
+                        
+                        return {
+                            "success": True,
+                            "user_address": user_address,
+                            "network": network,
+                            "data": {
+                                "protocol": "Aave",
+                                "source": "DefiLlama API",
+                                "network_tvl": current_network_tvl,
+                                "total_protocol_tvl": sum([chain.get("tvl", 0) for chain in tvl]),
+                                "supported_assets": ["USDC", "WETH", "USDT", "DAI", "WBTC"],
+                                "note": "User-specific data requires valid Aave API key. Showing protocol-level data from DefiLlama.",
+                                "timestamp": datetime.now().isoformat()
+                            }
                         }
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"Failed to fetch user data: {response.status}"
-                    }
+                    else:
+                        return {
+                            "success": False,
+                            "error": f"Failed to fetch Aave data: {response.status}"
+                        }
+            except Exception as api_error:
+                return {
+                    "success": False,
+                    "error": f"Failed to get Aave data: {str(api_error)}"
+                }
+                
         except Exception as e:
             return {
                 "success": False,
                 "error": f"Failed to get user positions: {str(e)}"
             }
+    
+
     
     async def _get_asset_data(self, **kwargs) -> dict:
         """Get detailed information about a specific asset."""
