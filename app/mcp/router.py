@@ -9,9 +9,9 @@ from .tools import (
     DuckDuckGoSearchTool,
     WebSearchTool,
     CryptoPriceTool,
+    CryptoNewsTool,
     DeFiProtocolTool,
     PortfolioTrackerTool,
-    CryptoNewsTool,
     NFTMarketplaceTool,
     MarketAnalysisTool,
     NotificationTool,
@@ -34,7 +34,41 @@ from .tools import (
     GoogleMapsTool,
     JiraTool,
     SlackTool,
-    CurrencyConverterTool
+    CurrencyConverterTool,
+    
+    # New MCP Tools
+    DuneQueryTool,
+    MeteoraTool,
+    PendleTool,
+    DefiLlamaTool,
+    DeribitTool,
+    ChainbaseTokenMetadataTool,
+    ChainbaseTokenTopHoldersTool,
+    ChainbaseTokenHoldersTool,
+    ChainbaseTokenPriceTool,
+    ChainbaseTokenPriceHistoryTool,
+    ChainbaseNFTTool,
+    PumpFunDataTool,
+    CoinDeskAssetsTool,
+    BNBChainTool,
+    ChainbaseBasicTool,
+    
+    # DeFi and Trading Tools
+    CoinGeckoTool,
+    EtherscanTool,
+    BinanceTool,
+    UniswapTool,
+    ChainlinkTool,
+    
+    # Blockchain Tools
+
+
+    # Real Wallet Data Tools
+    ChainBaseBalanceTool,
+    MetaSleuthWalletTool,
+    
+    # Business Intelligence Tools
+    ApolloTool
 )
 
 logger = logging.getLogger(__name__)
@@ -76,7 +110,41 @@ class MCPRouter:
             "googlemaps": GoogleMapsTool(),
             "jira": JiraTool(),
             "slack": SlackTool(),
-            "currency_converter": CurrencyConverterTool()
+            "currency_converter": CurrencyConverterTool(),
+            
+            # New MCP Tools
+            "dune_query": DuneQueryTool(),
+            "meteora": MeteoraTool(),
+            "pendle": PendleTool(),
+            "defillama": DefiLlamaTool(),
+            "deribit": DeribitTool(),
+            "chainbase_token_metadata": ChainbaseTokenMetadataTool(),
+            "chainbase_token_top_holders": ChainbaseTokenTopHoldersTool(),
+            "chainbase_token_holders": ChainbaseTokenHoldersTool(),
+            "chainbase_token_price": ChainbaseTokenPriceTool(),
+            "chainbase_token_price_history": ChainbaseTokenPriceHistoryTool(),
+            "chainbase_nft": ChainbaseNFTTool(),
+            "pumpfun_data": PumpFunDataTool(),
+            "coindesk_assets": CoinDeskAssetsTool(),
+            "bnbchain": BNBChainTool(),
+            "chainbase_basic": ChainbaseBasicTool(),
+            
+            # DeFi and Trading Tools
+            "coingecko": CoinGeckoTool(),
+            "etherscan": EtherscanTool(),
+            "binance": BinanceTool(),
+            "uniswap": UniswapTool(),
+            "chainlink": ChainlinkTool(),
+            
+            # Blockchain Tools
+
+
+# Real Wallet Data Tools
+"chainbase_balance": ChainBaseBalanceTool(),
+"metasleuth_wallet": MetaSleuthWalletTool(),
+
+# Business Intelligence Tools
+"apollo": ApolloTool()
         }
         
         # Register all tools with validation rules

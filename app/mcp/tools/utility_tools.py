@@ -21,7 +21,6 @@ class OpenWeatherTool(MCPTool):
     
     def __init__(self):
         self.session = None
-        self.api_key = os.getenv("OPENWEATHER_API_KEY")
         self.base_url = "https://api.openweathermap.org/data/2.5"
         self.geo_url = "https://api.openweathermap.org/geo/1.0"
     
@@ -84,9 +83,13 @@ class OpenWeatherTool(MCPTool):
                 "exclude": {
                     "type": "string",
                     "description": "Exclude parts from response (current,minutely,hourly,daily,alerts)"
+                },
+                "api_key": {
+                    "type": "string",
+                    "description": "OpenWeatherMap API key (required)"
                 }
             },
-            "required": ["action"]
+            "required": ["action", "api_key"]
         }
     
     async def _get_session(self):
@@ -101,18 +104,18 @@ class OpenWeatherTool(MCPTool):
             await self.session.close()
             self.session = None
     
-    async def _make_request(self, url: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def _make_request(self, url: str, params: Dict[str, Any] = None, api_key: str = None) -> Dict[str, Any]:
         """Make request to OpenWeatherMap API"""
         try:
             session = await self._get_session()
             
-            if not self.api_key:
-                return {"success": False, "error": "OpenWeatherMap API key not configured"}
+            if not api_key:
+                return {"success": False, "error": "OpenWeatherMap API key is required"}
             
             # Add API key to params
             if params is None:
                 params = {}
-            params["appid"] = self.api_key
+            params["appid"] = api_key
             
             async with session.get(url, params=params) as response:
                 if response.status == 200:
@@ -148,7 +151,8 @@ class OpenWeatherTool(MCPTool):
             params["q"] = location
         
         url = f"{self.base_url}/weather"
-        result = await self._make_request(url, params)
+        api_key = kwargs.get("api_key")
+        result = await self._make_request(url, params, api_key)
         return [result]
     
     async def _get_weather_forecast(self, **kwargs) -> List[Dict[str, Any]]:
@@ -180,7 +184,8 @@ class OpenWeatherTool(MCPTool):
             params["q"] = location
         
         url = f"{self.base_url}/forecast"
-        result = await self._make_request(url, params)
+        api_key = kwargs.get("api_key")
+        result = await self._make_request(url, params, api_key)
         return [result]
     
     async def _get_weather_alerts(self, **kwargs) -> List[Dict[str, Any]]:
@@ -207,7 +212,8 @@ class OpenWeatherTool(MCPTool):
             params["q"] = location
         
         url = f"{self.base_url}/onecall"
-        result = await self._make_request(url, params)
+        api_key = kwargs.get("api_key")
+        result = await self._make_request(url, params, api_key)
         return [result]
     
     async def _get_air_pollution(self, **kwargs) -> List[Dict[str, Any]]:
@@ -224,7 +230,8 @@ class OpenWeatherTool(MCPTool):
         }
         
         url = f"{self.base_url}/air_pollution"
-        result = await self._make_request(url, params)
+        api_key = kwargs.get("api_key")
+        result = await self._make_request(url, params, api_key)
         return [result]
     
     async def _get_geocoding(self, **kwargs) -> List[Dict[str, Any]]:
@@ -243,7 +250,8 @@ class OpenWeatherTool(MCPTool):
         }
         
         url = f"{self.geo_url}/direct"
-        result = await self._make_request(url, params)
+        api_key = kwargs.get("api_key")
+        result = await self._make_request(url, params, api_key)
         return [result]
     
     async def _get_reverse_geocoding(self, **kwargs) -> List[Dict[str, Any]]:
@@ -264,7 +272,8 @@ class OpenWeatherTool(MCPTool):
         }
         
         url = f"{self.geo_url}/reverse"
-        result = await self._make_request(url, params)
+        api_key = kwargs.get("api_key")
+        result = await self._make_request(url, params, api_key)
         return [result]
     
     async def _get_weather_history(self, **kwargs) -> List[Dict[str, Any]]:
@@ -290,13 +299,18 @@ class OpenWeatherTool(MCPTool):
         }
         
         url = f"{self.base_url}/onecall/timemachine"
-        result = await self._make_request(url, params)
+        api_key = kwargs.get("api_key")
+        result = await self._make_request(url, params, api_key)
         return [result]
     
     async def execute(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Execute OpenWeatherMap API operations"""
         try:
             action = arguments.get("action")
+            api_key = arguments.get("api_key")
+            
+            if not api_key:
+                return [{"type": "text", "text": "❌ Error: OpenWeatherMap API key is required. Please provide your API key."}]
             
             if action == "get_current_weather":
                 return await self._get_current_weather(**arguments)
@@ -313,10 +327,10 @@ class OpenWeatherTool(MCPTool):
             elif action == "get_weather_history":
                 return await self._get_weather_history(**arguments)
             else:
-                return [{"success": False, "error": f"Unknown action: {action}"}]
+                return [{"type": "text", "text": f"❌ Error: Unknown action: {action}"}]
                 
         except Exception as e:
-            return [{"success": False, "error": f"Execution error: {str(e)}"}]
+            return [{"type": "text", "text": f"❌ Error: Execution error: {str(e)}"}]
         finally:
             await self._cleanup_session()
 
@@ -326,7 +340,6 @@ class GoogleMapsTool(MCPTool):
     
     def __init__(self):
         self.session = None
-        self.api_key = os.getenv("GOOGLE_MAPS_API_KEY")
         self.base_url = "https://maps.googleapis.com/maps/api"
     
     @property
@@ -430,9 +443,13 @@ class GoogleMapsTool(MCPTool):
                 "keyword": {
                     "type": "string",
                     "description": "Keyword for nearby places search"
+                },
+                "api_key": {
+                    "type": "string",
+                    "description": "Google Maps API key (required)"
                 }
             },
-            "required": ["action"]
+            "required": ["action", "api_key"]
         }
     
     def _get_session(self):
@@ -447,14 +464,14 @@ class GoogleMapsTool(MCPTool):
             asyncio.create_task(self.session.close())
             self.session = None
     
-    async def _make_request(self, endpoint: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def _make_request(self, endpoint: str, params: Dict[str, Any], api_key: str = None) -> Dict[str, Any]:
         """Make request to Google Maps API"""
-        if not self.api_key:
-            return {"success": False, "error": "Google Maps API key not configured"}
+        if not api_key:
+            return {"success": False, "error": "Google Maps API key is required"}
         
         try:
             session = self._get_session()
-            params["key"] = self.api_key
+            params["key"] = api_key
             
             url = f"{self.base_url}/{endpoint}"
             async with session.get(url, params=params) as response:
@@ -479,7 +496,8 @@ class GoogleMapsTool(MCPTool):
             "language": language
         }
         
-        result = await self._make_request("geocode/json", params)
+        api_key = kwargs.get("api_key")
+        result = await self._make_request("geocode/json", params, api_key)
         return [result]
     
     async def _reverse_geocode(self, latitude: float, longitude: float, language: str = "en") -> List[Dict[str, Any]]:
@@ -492,7 +510,8 @@ class GoogleMapsTool(MCPTool):
             "language": language
         }
         
-        result = await self._make_request("geocode/json", params)
+        api_key = kwargs.get("api_key")
+        result = await self._make_request("geocode/json", params, api_key)
         return [result]
     
     async def _get_directions(self, origin: str, destination: str, waypoints: str = None, 
@@ -511,7 +530,8 @@ class GoogleMapsTool(MCPTool):
         if waypoints:
             params["waypoints"] = waypoints
         
-        result = await self._make_request("directions/json", params)
+        api_key = kwargs.get("api_key")
+        result = await self._make_request("directions/json", params, api_key)
         return [result]
     
     async def _search_places(self, query: str, latitude: float = None, longitude: float = None,
@@ -532,7 +552,8 @@ class GoogleMapsTool(MCPTool):
         if type:
             params["type"] = type
         
-        result = await self._make_request("place/textsearch/json", params)
+        api_key = kwargs.get("api_key")
+        result = await self._make_request("place/textsearch/json", params, api_key)
         return [result]
     
     async def _get_place_details(self, place_id: str, language: str = "en") -> List[Dict[str, Any]]:
@@ -545,7 +566,8 @@ class GoogleMapsTool(MCPTool):
             "language": language
         }
         
-        result = await self._make_request("place/details/json", params)
+        api_key = kwargs.get("api_key")
+        result = await self._make_request("place/details/json", params, api_key)
         return [result]
     
     async def _get_nearby_places(self, latitude: float, longitude: float, radius: int = 5000,
@@ -565,7 +587,8 @@ class GoogleMapsTool(MCPTool):
         if keyword:
             params["keyword"] = keyword
         
-        result = await self._make_request("place/nearbysearch/json", params)
+        api_key = kwargs.get("api_key")
+        result = await self._make_request("place/nearbysearch/json", params, api_key)
         return [result]
     
     async def _get_distance_matrix(self, origins: str, destinations: str, mode: str = "driving",
@@ -582,7 +605,8 @@ class GoogleMapsTool(MCPTool):
             "language": language
         }
         
-        result = await self._make_request("distancematrix/json", params)
+        api_key = kwargs.get("api_key")
+        result = await self._make_request("distancematrix/json", params, api_key)
         return [result]
     
     async def _get_elevation(self, latitude: float, longitude: float) -> List[Dict[str, Any]]:
@@ -594,7 +618,8 @@ class GoogleMapsTool(MCPTool):
             "locations": f"{latitude},{longitude}"
         }
         
-        result = await self._make_request("elevation/json", params)
+        api_key = kwargs.get("api_key")
+        result = await self._make_request("elevation/json", params, api_key)
         return [result]
     
     async def _get_timezone(self, latitude: float, longitude: float, timestamp: int = None) -> List[Dict[str, Any]]:
@@ -609,13 +634,18 @@ class GoogleMapsTool(MCPTool):
         if timestamp:
             params["timestamp"] = timestamp
         
-        result = await self._make_request("timezone/json", params)
+        api_key = kwargs.get("api_key")
+        result = await self._make_request("timezone/json", params, api_key)
         return [result]
     
     async def execute(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Execute the Google Maps tool action"""
         try:
             action = arguments.get("action")
+            api_key = arguments.get("api_key")
+            
+            if not api_key:
+                return [{"type": "text", "text": "❌ Error: Google Maps API key is required. Please provide your API key."}]
             
             if action == "geocode":
                 return await self._geocode(
@@ -679,10 +709,10 @@ class GoogleMapsTool(MCPTool):
                     arguments.get("timestamp")
                 )
             else:
-                return [{"success": False, "error": f"Unknown action: {action}"}]
+                return [{"type": "text", "text": f"❌ Error: Unknown action: {action}"}]
         
         except Exception as e:
-            return [{"success": False, "error": f"Execution error: {str(e)}"}]
+            return [{"type": "text", "text": f"❌ Error: Execution error: {str(e)}"}]
         finally:
             self._cleanup_session()
 
@@ -940,12 +970,7 @@ class JiraTool(MCPTool):
     def __init__(self):
         self.session = None
         self.base_url = None
-        self.username = os.getenv("JIRA_USERNAME")
-        self.api_token = os.getenv("JIRA_API_TOKEN")
-        self.domain = os.getenv("JIRA_DOMAIN")
-        
-        if self.domain:
-            self.base_url = f"https://{self.domain}.atlassian.net/rest/api/3"
+        # Note: JIRA credentials will be provided by user
     
     @property
     def name(self) -> str:
@@ -1072,9 +1097,21 @@ class JiraTool(MCPTool):
                 "expand": {
                     "type": "string",
                     "description": "Fields to expand in response"
+                },
+                "jira_domain": {
+                    "type": "string",
+                    "description": "JIRA domain (e.g., 'company' for company.atlassian.net)"
+                },
+                "jira_username": {
+                    "type": "string",
+                    "description": "JIRA username or email (required)"
+                },
+                "jira_api_token": {
+                    "type": "string",
+                    "description": "JIRA API token (required)"
                 }
             },
-            "required": ["action"]
+            "required": ["action", "jira_domain", "jira_username", "jira_api_token"]
         }
     
     async def _get_session(self):
@@ -1089,13 +1126,16 @@ class JiraTool(MCPTool):
             await self.session.close()
             self.session = None
     
-    async def _make_request(self, method: str, endpoint: str, data: Dict[str, Any] = None, params: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def _make_request(self, method: str, endpoint: str, data: Dict[str, Any] = None, params: Dict[str, Any] = None, **kwargs) -> Dict[str, Any]:
         """Make authenticated request to Jira API"""
         try:
             session = await self._get_session()
             
-            if not self.base_url or not self.username or not self.api_token:
-                return {"success": False, "error": "Jira credentials not configured. Set JIRA_DOMAIN, JIRA_USERNAME, and JIRA_API_TOKEN environment variables."}
+            jira_username = kwargs.get("jira_username")
+            jira_api_token = kwargs.get("jira_api_token")
+            
+            if not self.base_url or not jira_username or not jira_api_token:
+                return {"type": "text", "text": "❌ Error: JIRA credentials not configured. Please provide domain, username, and API token."}
             
             url = f"{self.base_url}/{endpoint}"
             headers = {
@@ -1104,7 +1144,7 @@ class JiraTool(MCPTool):
             }
             
             # Basic auth with username and API token
-            auth = aiohttp.BasicAuth(self.username, self.api_token)
+            auth = aiohttp.BasicAuth(jira_username, jira_api_token)
             
             if method.upper() == "GET":
                 async with session.get(url, headers=headers, auth=auth, params=params) as response:
@@ -1119,10 +1159,10 @@ class JiraTool(MCPTool):
                 async with session.delete(url, headers=headers, auth=auth, params=params) as response:
                     return await self._handle_response(response)
             else:
-                return {"success": False, "error": f"Unsupported HTTP method: {method}"}
+                return {"type": "text", "text": f"❌ Error: Unsupported HTTP method: {method}"}
                 
         except Exception as e:
-            return {"success": False, "error": f"Request failed: {str(e)}"}
+            return {"type": "text", "text": f"❌ Error: Request failed: {str(e)}"}
     
     async def _handle_response(self, response) -> Dict[str, Any]:
         """Handle API response"""
@@ -1434,6 +1474,15 @@ class JiraTool(MCPTool):
         """Execute Jira API operations"""
         try:
             action = arguments.get("action")
+            jira_domain = arguments.get("jira_domain")
+            jira_username = arguments.get("jira_username")
+            jira_api_token = arguments.get("jira_api_token")
+            
+            if not jira_domain or not jira_username or not jira_api_token:
+                return [{"type": "text", "text": "❌ Error: JIRA domain, username, and API token are required. Please provide all credentials."}]
+            
+            # Set base URL dynamically
+            self.base_url = f"https://{jira_domain}.atlassian.net/rest/api/3"
             
             if action == "get_issues":
                 return await self._get_issues(**arguments)
@@ -1456,7 +1505,7 @@ class JiraTool(MCPTool):
             elif action == "get_workflows":
                 return await self._get_workflows(**arguments)
             elif action == "get_users":
-                return await self._get_users(**arguments)
+                return await self._get_user(**arguments)
             elif action == "get_user":
                 return await self._get_user(**arguments)
             elif action == "search_issues":
@@ -1476,9 +1525,9 @@ class JiraTool(MCPTool):
             elif action == "get_project_versions":
                 return await self._get_project_versions(**arguments)
             else:
-                return [{"success": False, "error": f"Unknown action: {action}"}]
+                return [{"type": "text", "text": f"❌ Error: Unknown action: {action}"}]
                 
         except Exception as e:
-            return [{"success": False, "error": f"Execution error: {str(e)}"}]
+            return [{"type": "text", "text": f"❌ Error: Execution error: {str(e)}"}]
         finally:
             await self._cleanup_session()

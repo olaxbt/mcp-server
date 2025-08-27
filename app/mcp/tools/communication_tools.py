@@ -17,8 +17,6 @@ class GmailTool(MCPTool):
     def __init__(self):
         self.session = None
         self.gmail_api_url = "https://gmail.googleapis.com/gmail/v1/users/me"
-        self.api_key = os.getenv("GMAIL_API_KEY")
-        self.access_token = os.getenv("GMAIL_ACCESS_TOKEN")
 
     @property
     def name(self) -> str:
@@ -50,6 +48,14 @@ class GmailTool(MCPTool):
                         "move_to_trash",
                         "get_profile"
                     ]
+                },
+                "api_key": {
+                    "type": "string",
+                    "description": "Gmail API key (required)"
+                },
+                "access_token": {
+                    "type": "string",
+                    "description": "Gmail access token (required)"
                 },
                 "query": {
                     "type": "string",
@@ -94,7 +100,7 @@ class GmailTool(MCPTool):
                     "default": False
                 }
             },
-            "required": ["action"]
+            "required": ["action", "api_key", "access_token"]
         }
 
     async def _get_session(self):
@@ -112,6 +118,11 @@ class GmailTool(MCPTool):
     async def execute(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
         try:
             action = arguments.get("action")
+            api_key = arguments.get("api_key")
+            access_token = arguments.get("access_token")
+            
+            if not api_key or not access_token:
+                return [{"type": "text", "text": "❌ Error: Gmail API key and access token are required. Please provide both credentials."}]
 
             if action == "search_emails":
                 result = await self._search_emails(**arguments)
@@ -138,7 +149,7 @@ class GmailTool(MCPTool):
             elif action == "get_profile":
                 result = await self._get_profile(**arguments)
             else:
-                result = {"error": f"Unknown action: {action}"}
+                result = {"type": "text", "text": f"❌ Error: Unknown action: {action}"}
 
             return [result]
         finally:
@@ -160,9 +171,10 @@ class GmailTool(MCPTool):
                 "includeSpamTrash": str(include_spam_trash).lower()
             }
 
+            access_token = kwargs.get("access_token")
             headers = {}
-            if self.access_token:
-                headers["Authorization"] = f"Bearer {self.access_token}"
+            if access_token:
+                headers["Authorization"] = f"Bearer {access_token}"
 
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -656,8 +668,6 @@ class GoogleCalendarTool(MCPTool):
     def __init__(self):
         self.session = None
         self.calendar_api_url = "https://www.googleapis.com/calendar/v3"
-        self.api_key = os.getenv("GOOGLE_CALENDAR_API_KEY")
-        self.access_token = os.getenv("GOOGLE_CALENDAR_ACCESS_TOKEN")
 
     @property
     def name(self) -> str:
@@ -745,9 +755,17 @@ class GoogleCalendarTool(MCPTool):
                     "type": "string",
                     "description": "Order of events (startTime, updated)",
                     "default": "startTime"
+                },
+                "api_key": {
+                    "type": "string",
+                    "description": "Google Calendar API key (required)"
+                },
+                "access_token": {
+                    "type": "string",
+                    "description": "Google Calendar access token (required)"
                 }
             },
-            "required": ["action"]
+            "required": ["action", "api_key", "access_token"]
         }
 
     async def _get_session(self):
@@ -765,6 +783,11 @@ class GoogleCalendarTool(MCPTool):
     async def execute(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
         try:
             action = arguments.get("action")
+            api_key = arguments.get("api_key")
+            access_token = arguments.get("access_token")
+            
+            if not api_key or not access_token:
+                return [{"type": "text", "text": "❌ Error: Google Calendar API key and access token are required. Please provide both credentials."}]
 
             if action == "list_calendars":
                 result = await self._list_calendars(**arguments)
@@ -791,7 +814,7 @@ class GoogleCalendarTool(MCPTool):
             elif action == "get_event_instances":
                 result = await self._get_event_instances(**arguments)
             else:
-                result = {"error": f"Unknown action: {action}"}
+                result = {"type": "text", "text": f"❌ Error: Unknown action: {action}"}
 
             return [result]
         finally:
@@ -804,9 +827,10 @@ class GoogleCalendarTool(MCPTool):
 
             url = f"{self.calendar_api_url}/users/me/calendarList"
 
+            access_token = kwargs.get("access_token")
             headers = {}
-            if self.access_token:
-                headers["Authorization"] = f"Bearer {self.access_token}"
+            if access_token:
+                headers["Authorization"] = f"Bearer {access_token}"
 
             async with session.get(url, headers=headers) as response:
                 if response.status == 200:
@@ -839,9 +863,10 @@ class GoogleCalendarTool(MCPTool):
 
             url = f"{self.calendar_api_url}/calendars/{calendar_id}"
 
+            access_token = kwargs.get("access_token")
             headers = {}
-            if self.access_token:
-                headers["Authorization"] = f"Bearer {self.access_token}"
+            if access_token:
+                headers["Authorization"] = f"Bearer {access_token}"
 
             async with session.get(url, headers=headers) as response:
                 if response.status == 200:
@@ -889,9 +914,10 @@ class GoogleCalendarTool(MCPTool):
             if time_max:
                 params["timeMax"] = time_max
 
+            access_token = kwargs.get("access_token")
             headers = {}
-            if self.access_token:
-                headers["Authorization"] = f"Bearer {self.access_token}"
+            if access_token:
+                headers["Authorization"] = f"Bearer {access_token}"
 
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -1363,8 +1389,7 @@ class SlackTool(MCPTool):
     
     def __init__(self):
         self.session = None
-        self.bot_token = os.getenv("SLACK_BOT_TOKEN")
-        self.user_token = os.getenv("SLACK_USER_TOKEN")
+        # Note: Slack tokens will be provided by user
         self.base_url = "https://slack.com/api"
     
     @property
@@ -1504,9 +1529,17 @@ class SlackTool(MCPTool):
                     "type": "boolean",
                     "default": True,
                     "description": "Exclude archived conversations"
+                },
+                "bot_token": {
+                    "type": "string",
+                    "description": "Slack Bot Token (required)"
+                },
+                "user_token": {
+                    "type": "string",
+                    "description": "Slack User Token (required)"
                 }
             },
-            "required": ["action"]
+            "required": ["action", "bot_token", "user_token"]
         }
     
     async def _get_session(self):
@@ -1521,16 +1554,19 @@ class SlackTool(MCPTool):
             await self.session.close()
             self.session = None
     
-    async def _make_request(self, method: str, endpoint: str, data: Dict[str, Any] = None, params: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def _make_request(self, method: str, endpoint: str, data: Dict[str, Any] = None, params: Dict[str, Any] = None, **kwargs) -> Dict[str, Any]:
         """Make authenticated request to Slack API"""
         try:
             session = await self._get_session()
             
-            if not self.bot_token and not self.user_token:
-                return {"success": False, "error": "Slack tokens not configured. Set SLACK_BOT_TOKEN or SLACK_USER_TOKEN environment variables."}
+            bot_token = kwargs.get("bot_token")
+            user_token = kwargs.get("user_token")
+            
+            if not bot_token and not user_token:
+                return {"type": "text", "text": "❌ Error: Slack tokens not configured. Please provide both bot_token and user_token."}
             
             # Use bot token if available, otherwise user token
-            token = self.bot_token or self.user_token
+            token = bot_token or user_token
             
             url = f"{self.base_url}/{endpoint}"
             headers = {
@@ -1551,7 +1587,7 @@ class SlackTool(MCPTool):
                 async with session.post(url, headers=headers, json=data) as response:
                     return await self._handle_response(response)
             else:
-                return {"success": False, "error": f"Unsupported HTTP method: {method}"}
+                return {"type": "text", "text": f"❌ Error: Unsupported HTTP method: {method}"}
                 
         except Exception as e:
             return {"success": False, "error": f"Request failed: {str(e)}"}
@@ -1992,6 +2028,11 @@ class SlackTool(MCPTool):
         """Execute Slack API operations"""
         try:
             action = arguments.get("action")
+            bot_token = arguments.get("bot_token")
+            user_token = arguments.get("user_token")
+            
+            if not bot_token or not user_token:
+                return [{"type": "text", "text": "❌ Error: Both Slack Bot Token and User Token are required. Please provide both credentials."}]
             
             if action == "send_message":
                 return await self._send_message(**arguments)
@@ -2044,9 +2085,9 @@ class SlackTool(MCPTool):
             elif action == "get_reactions":
                 return await self._get_reactions(**arguments)
             else:
-                return [{"success": False, "error": f"Unknown action: {action}"}]
+                return [{"type": "text", "text": f"❌ Error: Unknown action: {action}"}]
                 
         except Exception as e:
-            return [{"success": False, "error": f"Execution error: {str(e)}"}]
+            return [{"type": "text", "text": f"❌ Error: Execution error: {str(e)}"}]
         finally:
             await self._cleanup_session()

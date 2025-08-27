@@ -76,32 +76,70 @@ from .utility_tools import (
     NotificationTool
 )
 
+# New MCP Tools
+from .dune_tools import DuneQueryTool
+from .meteora_tools import MeteoraTool
+from .pendle_tools import PendleTool
+from .defi_tools_extended import (
+    DefiLlamaTool,
+    DeribitTool,
+    ChainbaseTokenMetadataTool,
+    ChainbaseTokenTopHoldersTool,
+    ChainbaseTokenHoldersTool,
+    ChainbaseTokenPriceTool,
+    ChainbaseTokenPriceHistoryTool
+)
+from .chainbase_nft_tool import ChainbaseNFTTool
+from .additional_tools import (
+    PumpFunDataTool,
+    CoinDeskAssetsTool,
+    BNBChainTool,
+    ChainbaseBasicTool
+)
+
+# DeFi and Trading Tools
+from .defi_trading_tools import (
+    CoinGeckoTool,
+    EtherscanTool,
+    BinanceTool,
+    UniswapTool,
+    ChainlinkTool
+)
+
+
+
+
+
+# Real Wallet Data Tools
+from .chainbase_balance_tool import ChainBaseBalanceTool
+from .metasleuth_wallet_tool import MetaSleuthWalletTool
+
+# Business Intelligence Tools
+from .apollo_tool import ApolloTool
+
 # Export all tools for easy importing
 __all__ = [
     # Search and Web
     "DuckDuckGoSearchTool",
     "WebSearchTool",
     
-    # Crypto and DeFi
+    # Crypto Tools
     "CryptoPriceTool",
+    "CryptoNewsTool",
+    
+    # DeFi Tools
     "DeFiProtocolTool",
     "PortfolioTrackerTool",
-    "CryptoNewsTool",
-    "NFTMarketplaceTool",
-    "MarketAnalysisTool",
+    "AaveTool",
     "APYCalculatorTool",
-    
-    # Solana Ecosystem
     "JupiterTool",
     "RaydiumTool",
     
-    # DeFi
-    "AaveTool",
+    # NFT Tools
+    "NFTMarketplaceTool",
     
-    # Currency
-    "CurrencyConverterTool",
-    
-    # Data Analytics
+    # Analytics Tools
+    "MarketAnalysisTool",
     "LunarCrushTool",
     "CoinDeskTool",
     "PumpNewsTool",
@@ -109,19 +147,52 @@ __all__ = [
     "GMGNTool",
     "MerklTool",
     
-    # Social Media
+    # Social Tools
     "YouTubeTool",
     "TwitterTool",
     "RedditTool",
-    
-    # Communication
     "GmailTool",
     "GoogleCalendarTool",
     "SlackTool",
     
-    # Utility
+    # Utility Tools
     "OpenWeatherTool",
     "GoogleMapsTool",
     "JiraTool",
-    "NotificationTool"
+    "NotificationTool",
+    
+    # New MCP Tools
+    "DuneQueryTool",
+    "MeteoraTool",
+    "PendleTool",
+    "DefiLlamaTool",
+    "DeribitTool",
+    "ChainbaseTokenMetadataTool",
+    "ChainbaseTokenTopHoldersTool",
+    "ChainbaseTokenHoldersTool",
+    "ChainbaseTokenPriceTool",
+    "ChainbaseTokenPriceHistoryTool",
+    "ChainbaseNFTTool",
+    "PumpFunDataTool",
+    "CoinDeskAssetsTool",
+    "BNBChainTool",
+    "ChainbaseBasicTool",
+    
+    # DeFi and Trading Tools
+    "CoinGeckoTool",
+    "EtherscanTool",
+    "BinanceTool",
+    "UniswapTool",
+    "ChainlinkTool",
+    
+
+
+
+
+# Real Wallet Data Tools
+"ChainBaseBalanceTool",
+"MetaSleuthWalletTool",
+
+# Business Intelligence Tools
+"ApolloTool"
 ]

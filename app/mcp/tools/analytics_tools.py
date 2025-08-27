@@ -24,7 +24,6 @@ class LunarCrushTool(MCPTool):
         self.session = None
         self.lunarcrush_base_url = "https://api.lunarcrush.com/v2"
         # Note: LunarCrush API requires authentication - user needs to provide API key
-        self.api_key = os.getenv("LUNARCRUSH_API_KEY")
     
     @property
     def name(self) -> str:
@@ -69,12 +68,12 @@ class LunarCrushTool(MCPTool):
                     "items": {"type": "string"},
                     "description": "Specific metrics to include"
                 },
-                "lunarcrush_api_key": {
+                "api_key": {
                     "type": "string",
-                    "description": "LunarCrush API key for real-time data (optional, will use sample data if not provided)"
+                    "description": "LunarCrush API key (required)"
                 }
             },
-            "required": ["action"]
+            "required": ["action", "api_key"]
         }
     
     async def _get_session(self):
@@ -93,9 +92,10 @@ class LunarCrushTool(MCPTool):
         """Execute LunarCrush tool based on action"""
         try:
             action = arguments.get("action")
+            api_key = arguments.get("api_key")
             
-            # Get API key from arguments or fall back to environment variable
-            api_key = arguments.get("lunarcrush_api_key") or self.api_key
+            if not api_key:
+                return [{"type": "text", "text": "❌ Error: LunarCrush API key is required. Please provide your API key."}]
             
             if action == "get_social_sentiment":
                 return await self._get_social_sentiment(arguments, api_key)
@@ -110,11 +110,11 @@ class LunarCrushTool(MCPTool):
             elif action == "get_comparative_analysis":
                 return await self._get_comparative_analysis(arguments, api_key)
             else:
-                return [{"error": f"Unknown action: {action}"}]
+                return [{"type": "text", "text": f"❌ Error: Unknown action: {action}"}]
                 
         except Exception as e:
             logger.error(f"Error in LunarCrush tool: {e}")
-            return [{"error": f"LunarCrush tool error: {str(e)}"}]
+            return [{"type": "text", "text": f"❌ Error: LunarCrush tool error: {str(e)}"}]
         finally:
             await self._cleanup_session()
     
@@ -554,7 +554,7 @@ class CoinDeskTool(MCPTool):
     def __init__(self):
         self.session = None
         self.coindesk_base_url = "https://api.coindesk.com/v1"
-        self.api_key = os.getenv("COINDESK_API_KEY")  # Optional for basic endpoints
+        # Note: CoinDesk API key will be provided by user
     
     @property
     def name(self) -> str:
@@ -601,12 +601,12 @@ class CoinDeskTool(MCPTool):
                     "description": "Number of results to return",
                     "default": 10
                 },
-                "coindesk_api_key": {
+                "api_key": {
                     "type": "string",
-                    "description": "CoinDesk API key for real-time data (optional, will use sample data if not provided)"
+                    "description": "CoinDesk API key (required)"
                 }
             },
-            "required": ["action"]
+            "required": ["action", "api_key"]
         }
     
     async def _get_session(self):
@@ -625,9 +625,10 @@ class CoinDeskTool(MCPTool):
         """Execute the CoinDesk tool action."""
         try:
             action = arguments.get("action")
+            api_key = arguments.get("api_key")
             
-            # Get API key from arguments or fall back to environment variable
-            api_key = arguments.get("coindesk_api_key") or self.api_key
+            if not api_key:
+                return [{"type": "text", "text": "❌ Error: CoinDesk API key is required. Please provide your API key."}]
             
             if action == "get_current_price":
                 result = await self._get_current_price(arguments, api_key)
@@ -916,7 +917,7 @@ class PumpNewsTool(MCPTool):
     def __init__(self):
         self.session = None
         self.pumpnews_api_url = "https://api.pumpnews.com/v1"
-        self.api_key = os.getenv("PUMPNEWS_API_KEY")
+        # Note: PumpNews API key will be provided by user
         # Alternative APIs for fallback
         self.coingecko_api_url = "https://api.coingecko.com/api/v3"
         self.cryptocompare_api_url = "https://min-api.cryptocompare.com/data"
@@ -966,9 +967,13 @@ class PumpNewsTool(MCPTool):
                     "type": "string",
                     "description": "News category (breaking, analysis, market, etc.)",
                     "default": "all"
+                },
+                "api_key": {
+                    "type": "string",
+                    "description": "PumpNews API key (required)"
                 }
             },
-            "required": ["action"]
+            "required": ["action", "api_key"]
         }
     
     async def _get_session(self):
@@ -986,6 +991,10 @@ class PumpNewsTool(MCPTool):
     async def execute(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
         try:
             action = arguments.get("action")
+            api_key = arguments.get("api_key")
+            
+            if not api_key:
+                return [{"type": "text", "text": "❌ Error: PumpNews API key is required. Please provide your API key."}]
             
             if action == "get_news":
                 result = await self._get_news(**arguments)
@@ -1004,7 +1013,7 @@ class PumpNewsTool(MCPTool):
             elif action == "get_portfolio_alerts":
                 result = await self._get_portfolio_alerts(**arguments)
             else:
-                result = {"error": f"Unknown action: {action}"}
+                result = {"type": "text", "text": f"❌ Error: Unknown action: {action}"}
             
             return [result]
         finally:
@@ -1027,8 +1036,9 @@ class PumpNewsTool(MCPTool):
                     params["symbol"] = symbol
                 
                 headers = {}
-                if self.api_key:
-                    headers["Authorization"] = f"Bearer {self.api_key}"
+                api_key = kwargs.get("api_key")
+                if api_key:
+                    headers["Authorization"] = f"Bearer {api_key}"
                 
                 async with session.get(url, params=params, headers=headers, allow_redirects=False) as response:
                     if response.status == 200:
@@ -1089,8 +1099,9 @@ class PumpNewsTool(MCPTool):
                 params = {"symbol": symbol, "timeframe": timeframe}
                 
                 headers = {}
-                if self.api_key:
-                    headers["Authorization"] = f"Bearer {self.api_key}"
+                api_key = kwargs.get("api_key")
+                if api_key:
+                    headers["Authorization"] = f"Bearer {api_key}"
                 
                 async with session.get(url, params=params, headers=headers, allow_redirects=False) as response:
                     if response.status == 200:
@@ -1155,8 +1166,9 @@ class PumpNewsTool(MCPTool):
                 params = {"symbol": symbol, "timeframe": timeframe}
                 
                 headers = {}
-                if self.api_key:
-                    headers["Authorization"] = f"Bearer {self.api_key}"
+                api_key = kwargs.get("api_key")
+                if api_key:
+                    headers["Authorization"] = f"Bearer {api_key}"
                 
                 async with session.get(url, params=params, headers=headers) as response:
                     if response.status == 200:
@@ -1211,8 +1223,9 @@ class PumpNewsTool(MCPTool):
                 params = {"limit": limit, "timeframe": timeframe}
                 
                 headers = {}
-                if self.api_key:
-                    headers["Authorization"] = f"Bearer {self.api_key}"
+                api_key = kwargs.get("api_key")
+                if api_key:
+                    headers["Authorization"] = f"Bearer {api_key}"
                 
                 async with session.get(url, params=params, headers=headers) as response:
                     if response.status == 200:
@@ -1479,7 +1492,7 @@ class PumpFunTool(MCPTool):
     def __init__(self):
         self.session = None
         self.pumpfun_api_url = "https://api.pumpfun.com/v1"
-        self.api_key = os.getenv("PUMPFUN_API_KEY")
+        # Note: PumpFun API key will be provided by user
     
     @property
     def name(self) -> str:
@@ -1526,9 +1539,13 @@ class PumpFunTool(MCPTool):
                     "type": "string",
                     "description": "Social media platform (twitter, reddit, telegram, discord, all)",
                     "default": "all"
+                },
+                "api_key": {
+                    "type": "string",
+                    "description": "PumpFun API key (required)"
                 }
             },
-            "required": ["action"]
+            "required": ["action", "api_key"]
         }
     
     async def _get_session(self):
@@ -1546,6 +1563,10 @@ class PumpFunTool(MCPTool):
     async def execute(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
         try:
             action = arguments.get("action")
+            api_key = arguments.get("api_key")
+            
+            if not api_key:
+                return [{"type": "text", "text": "❌ Error: PumpFun API key is required. Please provide your API key."}]
             
             if action == "get_pump_detection":
                 result = await self._get_pump_detection(**arguments)
@@ -1961,7 +1982,7 @@ class GMGNTool(MCPTool):
     def __init__(self):
         self.session = None
         self.gmgn_api_url = "https://api.gmgn.com/v1"
-        self.api_key = os.getenv("GMGN_API_KEY")
+        # Note: GMGN API key will be provided by user
     
     @property
     def name(self) -> str:
@@ -2012,9 +2033,13 @@ class GMGNTool(MCPTool):
                     "type": "string",
                     "description": "Gaming category (p2e, nft, metaverse, strategy, etc.)",
                     "default": "all"
+                },
+                "api_key": {
+                    "type": "string",
+                    "description": "GMGN API key (required)"
                 }
             },
-            "required": ["action"]
+            "required": ["action", "api_key"]
         }
     
     async def _get_session(self):
@@ -2032,6 +2057,10 @@ class GMGNTool(MCPTool):
     async def execute(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
         try:
             action = arguments.get("action")
+            api_key = arguments.get("api_key")
+            
+            if not api_key:
+                return [{"type": "text", "text": "❌ Error: GMGN API key is required. Please provide your API key."}]
             
             if action == "get_gaming_token_analysis":
                 result = await self._get_gaming_token_analysis(**arguments)
@@ -2050,7 +2079,7 @@ class GMGNTool(MCPTool):
             elif action == "get_gaming_investment_analysis":
                 result = await self._get_gaming_investment_analysis(**arguments)
             else:
-                result = {"error": f"Unknown action: {action}"}
+                result = {"type": "text", "text": f"❌ Error: Unknown action: {action}"}
             
             return [result]
         finally:
@@ -2479,7 +2508,7 @@ class MerklTool(MCPTool):
     def __init__(self):
         self.session = None
         self.merkl_api_url = "https://api.merkl.xyz/v1"
-        self.api_key = os.getenv("MERKL_API_KEY")
+        # Note: Merkl API key will be provided by user
     
     @property
     def name(self) -> str:
@@ -2539,9 +2568,13 @@ class MerklTool(MCPTool):
                     "type": "number",
                     "description": "Minimum APY filter for yield opportunities",
                     "default": 0
+                },
+                "api_key": {
+                    "type": "string",
+                    "description": "Merkl API key (required)"
                 }
             },
-            "required": ["action"]
+            "required": ["action", "api_key"]
         }
     
     async def _get_session(self):
@@ -2559,6 +2592,10 @@ class MerklTool(MCPTool):
     async def execute(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
         try:
             action = arguments.get("action")
+            api_key = arguments.get("api_key")
+            
+            if not api_key:
+                return [{"type": "text", "text": "❌ Error: Merkl API key is required. Please provide your API key."}]
             
             if action == "get_concentrated_positions":
                 result = await self._get_concentrated_positions(**arguments)

@@ -19,7 +19,6 @@ class YouTubeTool(MCPTool):
     def __init__(self):
         self.session = None
         self.youtube_api_url = "https://www.googleapis.com/youtube/v3"
-        self.api_key = os.getenv("YOUTUBE_API_KEY")
 
     @property
     def name(self) -> str:
@@ -112,6 +111,10 @@ class YouTubeTool(MCPTool):
                     "description": "Video license filter (youtube, creativeCommon)",
                     "enum": ["youtube", "creativeCommon"]
                 },
+                "api_key": {
+                    "type": "string",
+                    "description": "YouTube API key (required)"
+                },
                 "video_syndicated": {
                     "type": "boolean",
                     "description": "Filter for syndicated videos"
@@ -122,7 +125,7 @@ class YouTubeTool(MCPTool):
                     "enum": ["any", "episode", "movie"]
                 }
             },
-            "required": ["action"]
+            "required": ["action", "api_key"]
         }
 
     async def _get_session(self):
@@ -140,6 +143,10 @@ class YouTubeTool(MCPTool):
     async def execute(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
         try:
             action = arguments.get("action")
+            api_key = arguments.get("api_key")
+            
+            if not api_key:
+                return [{"type": "text", "text": "❌ Error: YouTube API key is required. Please provide your API key."}]
 
             if action == "search_videos":
                 result = await self._search_videos(**arguments)
@@ -162,7 +169,7 @@ class YouTubeTool(MCPTool):
             elif action == "search_channels":
                 result = await self._search_channels(**arguments)
             else:
-                result = {"error": f"Unknown action: {action}"}
+                result = {"type": "text", "text": f"❌ Error: Unknown action: {action}"}
 
             return [result]
         finally:
@@ -222,8 +229,9 @@ class YouTubeTool(MCPTool):
             if video_type:
                 params["videoType"] = video_type
 
-            if self.api_key:
-                params["key"] = self.api_key
+            api_key = kwargs.get("api_key")
+            if api_key:
+                params["key"] = api_key
 
             async with session.get(url, params=params) as response:
                 if response.status == 200:
@@ -270,8 +278,9 @@ class YouTubeTool(MCPTool):
                 "id": video_id
             }
 
-            if self.api_key:
-                params["key"] = self.api_key
+            api_key = kwargs.get("api_key")
+            if api_key:
+                params["key"] = api_key
 
             async with session.get(url, params=params) as response:
                 if response.status == 200:
@@ -325,8 +334,9 @@ class YouTubeTool(MCPTool):
                 "id": channel_id
             }
 
-            if self.api_key:
-                params["key"] = self.api_key
+            api_key = kwargs.get("api_key")
+            if api_key:
+                params["key"] = api_key
 
             async with session.get(url, params=params) as response:
                 if response.status == 200:
@@ -382,8 +392,9 @@ class YouTubeTool(MCPTool):
             if video_category_id:
                 params["videoCategoryId"] = video_category_id
 
-            if self.api_key:
-                params["key"] = self.api_key
+            api_key = kwargs.get("api_key")
+            if api_key:
+                params["key"] = api_key
 
             async with session.get(url, params=params) as response:
                 if response.status == 200:
@@ -433,8 +444,9 @@ class YouTubeTool(MCPTool):
                 "order": order
             }
 
-            if self.api_key:
-                params["key"] = self.api_key
+            api_key = kwargs.get("api_key")
+            if api_key:
+                params["key"] = api_key
 
             async with session.get(url, params=params) as response:
                 if response.status == 200:
@@ -480,8 +492,9 @@ class YouTubeTool(MCPTool):
                 "id": video_id
             }
 
-            if self.api_key:
-                params["key"] = self.api_key
+            api_key = kwargs.get("api_key")
+            if api_key:
+                params["key"] = api_key
 
             async with session.get(url, params=params) as response:
                 if response.status == 200:
@@ -539,8 +552,9 @@ class YouTubeTool(MCPTool):
                 "maxResults": max_results
             }
 
-            if self.api_key:
-                params["key"] = self.api_key
+            api_key = kwargs.get("api_key")
+            if api_key:
+                params["key"] = api_key
 
             async with session.get(url, params=params) as response:
                 if response.status == 200:
@@ -589,8 +603,9 @@ class YouTubeTool(MCPTool):
                 "id": channel_id
             }
 
-            if self.api_key:
-                params["key"] = self.api_key
+            api_key = kwargs.get("api_key")
+            if api_key:
+                params["key"] = api_key
 
             async with session.get(url, params=params) as response:
                 if response.status == 200:
@@ -608,8 +623,9 @@ class YouTubeTool(MCPTool):
                             "order": order
                         }
 
-                        if self.api_key:
-                            playlist_params["key"] = self.api_key
+                        api_key = kwargs.get("api_key")
+                        if api_key:
+                            playlist_params["key"] = api_key
 
                         async with session.get(playlist_url, params=playlist_params) as playlist_response:
                             if playlist_response.status == 200:
@@ -661,8 +677,9 @@ class YouTubeTool(MCPTool):
                 "regionCode": region_code
             }
 
-            if self.api_key:
-                params["key"] = self.api_key
+            api_key = kwargs.get("api_key")
+            if api_key:
+                params["key"] = api_key
 
             async with session.get(url, params=params) as response:
                 if response.status == 200:
@@ -714,8 +731,9 @@ class YouTubeTool(MCPTool):
                 "regionCode": region_code
             }
 
-            if self.api_key:
-                params["key"] = self.api_key
+            api_key = kwargs.get("api_key")
+            if api_key:
+                params["key"] = api_key
 
             async with session.get(url, params=params) as response:
                 if response.status == 200:
@@ -750,7 +768,7 @@ class TwitterTool(MCPTool):
     def __init__(self):
         self.session = None
         self.twitter_api_url = "https://api.twitter.com/2"
-        self.bearer_token = os.getenv("TWITTER_BEARER_TOKEN")
+        # Note: Twitter Bearer Token will be provided by user
     
     @property
     def name(self) -> str:
@@ -826,9 +844,13 @@ class TwitterTool(MCPTool):
                 "woeid": {
                     "type": "integer",
                     "description": "Where On Earth ID for trending topics"
+                },
+                "bearer_token": {
+                    "type": "string",
+                    "description": "Twitter Bearer Token (required)"
                 }
             },
-            "required": ["action"]
+            "required": ["action", "bearer_token"]
         }
     
     async def _get_session(self):
@@ -846,6 +868,10 @@ class TwitterTool(MCPTool):
     async def execute(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Execute the Twitter tool action."""
         action = arguments.get("action")
+        bearer_token = arguments.get("bearer_token")
+        
+        if not bearer_token:
+            return [{"type": "text", "text": "❌ Error: Twitter Bearer Token is required. Please provide your bearer token."}]
         
         try:
             session = await self._get_session()
@@ -875,7 +901,7 @@ class TwitterTool(MCPTool):
             elif action == "get_user_timeline":
                 return await self._get_user_timeline(session, **arguments)
             else:
-                return [{"error": f"Unknown action: {action}"}]
+                return [{"type": "text", "text": f"❌ Error: Unknown action: {action}"}]
         finally:
             await self._cleanup_session()
     
@@ -906,7 +932,8 @@ class TwitterTool(MCPTool):
         if end_time:
             params["end_time"] = end_time
         
-        headers = {"Authorization": f"Bearer {self.bearer_token}"} if self.bearer_token else {}
+        bearer_token = kwargs.get("bearer_token")
+        headers = {"Authorization": f"Bearer {bearer_token}"} if bearer_token else {}
         
         try:
             async with session.get(f"{self.twitter_api_url}/tweets/search/recent", params=params, headers=headers) as response:
@@ -1282,9 +1309,7 @@ class RedditTool(MCPTool):
     def __init__(self):
         self.session = None
         self.reddit_api_url = "https://oauth.reddit.com"
-        self.client_id = os.getenv("REDDIT_CLIENT_ID")
-        self.client_secret = os.getenv("REDDIT_CLIENT_SECRET")
-        self.user_agent = os.getenv("REDDIT_USER_AGENT", "MCP-Reddit-Tool/1.0")
+        # Note: Reddit credentials will be provided by user
         self.access_token = None
     
     @property
@@ -1352,9 +1377,22 @@ class RedditTool(MCPTool):
                     "enum": ["hot", "new", "top", "rising"],
                     "default": "hot",
                     "description": "Sort order for posts"
+                },
+                "client_id": {
+                    "type": "string",
+                    "description": "Reddit Client ID (required)"
+                },
+                "client_secret": {
+                    "type": "string",
+                    "description": "Reddit Client Secret (required)"
+                },
+                "user_agent": {
+                    "type": "string",
+                    "description": "Reddit User Agent (required)",
+                    "default": "MCP-Reddit-Tool/1.0"
                 }
             },
-            "required": ["action"]
+            "required": ["action", "client_id", "client_secret"]
         }
     
     async def _get_session(self):
@@ -1607,6 +1645,12 @@ class RedditTool(MCPTool):
         """Execute Reddit API operations"""
         try:
             action = arguments.get("action")
+            client_id = arguments.get("client_id")
+            client_secret = arguments.get("client_secret")
+            user_agent = arguments.get("user_agent", "MCP-Reddit-Tool/1.0")
+            
+            if not client_id or not client_secret:
+                return [{"type": "text", "text": "❌ Error: Reddit Client ID and Client Secret are required. Please provide both credentials."}]
             
             if action == "search_posts":
                 return await self._search_posts(**arguments)
@@ -1633,10 +1677,10 @@ class RedditTool(MCPTool):
             elif action == "get_rising_posts":
                 return await self._get_rising_posts(**arguments)
             else:
-                return [{"success": False, "error": f"Unknown action: {action}"}]
+                return [{"type": "text", "text": f"❌ Error: Unknown action: {action}"}]
                 
         except Exception as e:
-            return [{"success": False, "error": f"Execution error: {str(e)}"}]
+            return [{"type": "text", "text": f"❌ Error: Execution error: {str(e)}"}]
         finally:
             await self._cleanup_session()
 
