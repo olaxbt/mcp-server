@@ -49,13 +49,9 @@ class GmailTool(MCPTool):
                         "get_profile"
                     ]
                 },
-                "api_key": {
-                    "type": "string",
-                    "description": "Gmail API key (required)"
-                },
                 "access_token": {
                     "type": "string",
-                    "description": "Gmail access token (required)"
+                    "description": "Gmail OAuth access token (required) - Get from Google OAuth 2.0 flow"
                 },
                 "query": {
                     "type": "string",
@@ -100,7 +96,7 @@ class GmailTool(MCPTool):
                     "default": False
                 }
             },
-            "required": ["action", "api_key", "access_token"]
+            "required": ["action", "access_token"]
         }
 
     async def _get_session(self):
@@ -118,11 +114,10 @@ class GmailTool(MCPTool):
     async def execute(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
         try:
             action = arguments.get("action")
-            api_key = arguments.get("api_key")
             access_token = arguments.get("access_token")
             
-            if not api_key or not access_token:
-                return [{"type": "text", "text": "❌ Error: Gmail API key and access token are required. Please provide both credentials."}]
+            if not access_token:
+                return [{"type": "text", "text": "❌ Error: Gmail OAuth access token is required. Please provide your access token from Google OAuth 2.0 flow."}]
 
             if action == "search_emails":
                 result = await self._search_emails(**arguments)

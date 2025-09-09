@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import aiohttp
+import json
 import os
 from typing import Any, Dict, List, Optional
 from datetime import datetime
@@ -15,7 +16,11 @@ class PendleTool(MCPTool):
     def __init__(self):
         self.session = None
         # Note: Pendle API key will be provided by user
-        self.base_url = "https://api-v2.pendle.finance/core"
+        # Pendle uses different API versions for different endpoints
+        self.base_urls = {
+            "v1": "https://api-v2.pendle.finance/core/v1",
+            "v2": "https://api-v2.pendle.finance/core/v2"
+        }
         
     @property
     def name(self) -> str:
@@ -33,12 +38,12 @@ class PendleTool(MCPTool):
                 "action": {
                     "type": "string",
                     "enum": [
-                        "get_markets",
-                        "get_market_info",
-                        "get_yields",
-                        "get_liquidity",
-                        "get_tokens",
-                        "get_protocol_stats"
+                        "get_active_markets",
+                        "get_market_data",
+                        "get_historical_data",
+                        "get_protocol_stats",
+                        "get_yield_tokens",
+                        "get_liquidity_data"
                     ],
                     "description": "Action to perform"
                 },
@@ -93,21 +98,24 @@ class PendleTool(MCPTool):
             if not api_key:
                 return [{"type": "text", "text": "❌ Error: Pendle API key is required. Please provide your API key."}]
             
-            if action == "get_markets":
-                result = await self._get_markets(chain, limit)
-            elif action == "get_market_info":
+            if action == "get_active_markets":
+                result = await self._get_active_markets(chain, api_key)
+            elif action == "get_market_data":
                 if not market_address:
-                    result = {"type": "text", "text": "❌ Error: Market address is required for get_market_info"}
+                    result = {"type": "text", "text": "❌ Error: Market address is required for get_market_data"}
                 else:
-                    result = await self._get_market_info(market_address, chain)
-            elif action == "get_yields":
-                result = await self._get_yields(chain, limit)
-            elif action == "get_liquidity":
-                result = await self._get_liquidity(chain, limit)
-            elif action == "get_tokens":
-                result = await self._get_tokens(chain, limit)
+                    result = await self._get_market_data(market_address, chain, api_key)
+            elif action == "get_historical_data":
+                if not market_address:
+                    result = {"type": "text", "text": "❌ Error: Market address is required for get_historical_data"}
+                else:
+                    result = await self._get_historical_data(market_address, chain, api_key)
             elif action == "get_protocol_stats":
-                result = await self._get_protocol_stats(chain)
+                result = await self._get_protocol_stats(chain, api_key)
+            elif action == "get_yield_tokens":
+                result = await self._get_yield_tokens(chain, api_key)
+            elif action == "get_liquidity_data":
+                result = await self._get_liquidity_data(chain, api_key)
             else:
                 result = {"type": "text", "text": f"❌ Error: Unknown action: {action}"}
             
@@ -115,201 +123,388 @@ class PendleTool(MCPTool):
         finally:
             await self._cleanup_session()
     
-    async def _get_markets(self, chain: str, limit: int, **kwargs) -> dict:
-        """Get available markets on Pendle"""
+    async def _get_active_markets(self, chain: str, api_key: str) -> dict:
+        """Get active markets on Pendle using v1 API"""
         try:
-            url = f"{self.base_url}/markets"
-            params = {"chain": chain, "limit": limit}
+            # Map chain to Pendle's chain ID (1 = Ethereum, 42161 = Arbitrum, 56 = BSC)
+            chain_id = {"ethereum": "1", "arbitrum": "42161", "bsc": "56"}.get(chain, "1")
+            url = f"{self.base_urls['v1']}/{chain_id}/markets/active"
             
-            headers = {}
-            api_key = kwargs.get("api_key")
+            headers = {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
             if api_key:
                 headers["Authorization"] = f"Bearer {api_key}"
             
             session = await self._get_session()
-            async with session.get(url, params=params, headers=headers) as response:
+            async with session.get(url, headers=headers) as response:
                 if response.status == 200:
-                    data = await response.json()
-                    return {
-                        "success": True,
-                        "data": data,
-                        "chain": chain,
-                        "timestamp": datetime.now().isoformat()
-                    }
+                    # Read as text first, then parse as JSON (like Meteora)
+                    try:
+                        text_content = await response.text()
+                        data = json.loads(text_content)
+                        return {
+                            "success": True,
+                            "data": data,
+                            "chain": chain,
+                            "timestamp": datetime.now().isoformat()
+                        }
+                    except Exception as json_error:
+                        content_type = response.headers.get('content-type', 'Not specified')
+                        return {
+                            "success": False,
+                            "error": f"Failed to parse JSON response (type: {content_type}). Error: {str(json_error)}. Response: {text_content[:200]}..."
+                        }
                 else:
                     return {
                         "success": False,
                         "error": f"API request failed with status {response.status}"
                     }
         except Exception as e:
-            logger.error(f"Error getting markets: {e}")
+            logger.error(f"Error getting active markets: {e}")
             return {
                 "success": False,
-                "error": f"Failed to get markets: {str(e)}"
+                "error": f"Failed to get active markets: {str(e)}"
             }
     
-    async def _get_market_info(self, market_address: str, chain: str, **kwargs) -> dict:
-        """Get specific market information"""
+    async def _get_market_data(self, market_address: str, chain: str, api_key: str) -> dict:
+        """Get latest market data using v2 API"""
         try:
-            url = f"{self.base_url}/markets/{market_address}"
-            params = {"chain": chain}
+            chain_id = {"ethereum": "1", "arbitrum": "42161", "bsc": "56"}.get(chain, "1")
+            url = f"{self.base_urls['v2']}/{chain_id}/markets/{market_address}/data"
             
-            headers = {}
-            api_key = kwargs.get("api_key")
+            headers = {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
             if api_key:
                 headers["Authorization"] = f"Bearer {api_key}"
             
             session = await self._get_session()
-            async with session.get(url, params=params, headers=headers) as response:
+            async with session.get(url, headers=headers) as response:
                 if response.status == 200:
-                    data = await response.json()
-                    return {
-                        "success": True,
-                        "data": data,
-                        "market_address": market_address,
-                        "chain": chain,
-                        "timestamp": datetime.now().isoformat()
-                    }
+                    try:
+                        text_content = await response.text()
+                        data = json.loads(text_content)
+                        return {
+                            "success": True,
+                            "data": data,
+                            "market_address": market_address,
+                            "chain": chain,
+                            "timestamp": datetime.now().isoformat()
+                        }
+                    except Exception as json_error:
+                        content_type = response.headers.get('content-type', 'Not specified')
+                        return {
+                            "success": False,
+                            "error": f"Failed to parse JSON response (type: {content_type}). Error: {str(json_error)}. Response: {text_content[:200]}..."
+                        }
                 else:
                     return {
                         "success": False,
                         "error": f"API request failed with status {response.status}"
                     }
         except Exception as e:
-            logger.error(f"Error getting market info: {e}")
+            logger.error(f"Error getting market data: {e}")
             return {
                 "success": False,
-                "error": f"Failed to get market info: {str(e)}"
+                "error": f"Failed to get market data: {str(e)}"
             }
     
-    async def _get_yields(self, chain: str, limit: int, **kwargs) -> dict:
-        """Get yield data for Pendle markets"""
+    async def _get_historical_data(self, market_address: str, chain: str, api_key: str) -> dict:
+        """Get historical market data using v1 API"""
         try:
-            url = f"{self.base_url}/yields"
-            params = {"chain": chain, "limit": limit}
+            chain_id = {"ethereum": "1", "arbitrum": "42161", "bsc": "56"}.get(chain, "1")
+            url = f"{self.base_urls['v1']}/{chain_id}/markets/{market_address}/historical-data"
+            params = {"time_frame": "week"}
             
-            headers = {}
-            api_key = kwargs.get("api_key")
+            headers = {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
             if api_key:
                 headers["Authorization"] = f"Bearer {api_key}"
             
             session = await self._get_session()
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
-                    data = await response.json()
-                    return {
-                        "success": True,
-                        "data": data,
-                        "chain": chain,
-                        "timestamp": datetime.now().isoformat()
-                    }
+                    try:
+                        text_content = await response.text()
+                        data = json.loads(text_content)
+                        return {
+                            "success": True,
+                            "data": data,
+                            "market_address": market_address,
+                            "chain": chain,
+                            "timestamp": datetime.now().isoformat()
+                        }
+                    except Exception as json_error:
+                        content_type = response.headers.get('content-type', 'Not specified')
+                        return {
+                            "success": False,
+                            "error": f"Failed to parse JSON response (type: {content_type}). Error: {str(json_error)}. Response: {text_content[:200]}..."
+                        }
                 else:
                     return {
                         "success": False,
                         "error": f"API request failed with status {response.status}"
                     }
         except Exception as e:
-            logger.error(f"Error getting yields: {e}")
+            logger.error(f"Error getting historical data: {e}")
             return {
                 "success": False,
-                "error": f"Failed to get yields: {str(e)}"
+                "error": f"Failed to get historical data: {str(e)}"
             }
     
-    async def _get_liquidity(self, chain: str, limit: int, **kwargs) -> dict:
-        """Get liquidity data for Pendle markets"""
+    async def _get_protocol_stats(self, chain: str, api_key: str) -> dict:
+        """Get protocol statistics by aggregating data from active markets"""
         try:
-            url = f"{self.base_url}/liquidity"
-            params = {"chain": chain, "limit": limit}
+            # Get active markets first to calculate protocol stats
+            markets_result = await self._get_active_markets(chain, api_key)
             
-            headers = {}
-            api_key = kwargs.get("api_key")
-            if api_key:
-                headers["Authorization"] = f"Bearer {api_key}"
+            if not markets_result.get("success"):
+                return {
+                    "success": False,
+                    "error": f"Failed to get markets data for protocol stats: {markets_result.get('error', 'Unknown error')}"
+                }
             
-            session = await self._get_session()
-            async with session.get(url, params=params, headers=headers) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {
-                        "success": True,
-                        "data": data,
+            markets_data = markets_result.get("data", [])
+            
+            if not markets_data:
+                return {
+                    "success": True,
+                    "data": {
+                        "total_markets": 0,
+                        "total_tvl": 0,
+                        "average_apy": 0,
+                        "total_volume": 0,
                         "chain": chain,
-                        "timestamp": datetime.now().isoformat()
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"API request failed with status {response.status}"
-                    }
-        except Exception as e:
-            logger.error(f"Error getting liquidity: {e}")
+                        "message": "No active markets found"
+                    },
+                    "chain": chain,
+                    "timestamp": datetime.now().isoformat()
+                }
+            
+            # Calculate protocol statistics
+            total_markets = len(markets_data)
+            total_tvl = 0
+            total_volume = 0
+            apy_values = []
+            
+            for market in markets_data:
+                # Ensure market is a dictionary
+                if not isinstance(market, dict):
+                    continue
+                    
+                # Sum up TVL (assuming liquidity field exists)
+                if 'liquidity' in market and market['liquidity']:
+                    try:
+                        total_tvl += float(market['liquidity'])
+                    except (ValueError, TypeError):
+                        pass
+                
+                # Sum up trading volume
+                if 'tradingVolume' in market and market['tradingVolume']:
+                    try:
+                        total_volume += float(market['tradingVolume'])
+                    except (ValueError, TypeError):
+                        pass
+                
+                # Collect APY values for average calculation
+                if 'apy' in market and market['apy']:
+                    try:
+                        apy_values.append(float(market['apy']))
+                    except (ValueError, TypeError):
+                        pass
+            
+            # Calculate average APY
+            average_apy = sum(apy_values) / len(apy_values) if apy_values else 0
+            
+            protocol_stats = {
+                "total_markets": total_markets,
+                "total_tvl": round(total_tvl, 2),
+                "average_apy": round(average_apy, 2),
+                "total_volume": round(total_volume, 2),
+                "chain": chain,
+                "markets_analyzed": len(markets_data),
+                "apy_markets_count": len(apy_values)
+            }
+            
             return {
-                "success": False,
-                "error": f"Failed to get liquidity: {str(e)}"
+                "success": True,
+                "data": protocol_stats,
+                "chain": chain,
+                "timestamp": datetime.now().isoformat()
             }
-    
-    async def _get_tokens(self, chain: str, limit: int, **kwargs) -> dict:
-        """Get available tokens on Pendle"""
-        try:
-            url = f"{self.base_url}/tokens"
-            params = {"chain": chain, "limit": limit}
             
-            headers = {}
-            api_key = kwargs.get("api_key")
-            if api_key:
-                headers["Authorization"] = f"Bearer {api_key}"
-            
-            session = await self._get_session()
-            async with session.get(url, params=params, headers=headers) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {
-                        "success": True,
-                        "data": data,
-                        "chain": chain,
-                        "timestamp": datetime.now().isoformat()
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"API request failed with status {response.status}"
-                    }
-        except Exception as e:
-            logger.error(f"Error getting tokens: {e}")
-            return {
-                "success": False,
-                "error": f"Failed to get tokens: {str(e)}"
-            }
-    
-    async def _get_protocol_stats(self, chain: str, **kwargs) -> dict:
-        """Get protocol statistics for Pendle"""
-        try:
-            url = f"{self.base_url}/stats"
-            params = {"chain": chain}
-            
-            headers = {}
-            api_key = kwargs.get("api_key")
-            if api_key:
-                headers["Authorization"] = f"Bearer {api_key}"
-            
-            session = await self._get_session()
-            async with session.get(url, params=params, headers=headers) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {
-                        "success": True,
-                        "data": data,
-                        "chain": chain,
-                        "timestamp": datetime.now().isoformat()
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"API request failed with status {response.status}"
-                    }
         except Exception as e:
             logger.error(f"Error getting protocol stats: {e}")
             return {
                 "success": False,
                 "error": f"Failed to get protocol stats: {str(e)}"
+            }
+    
+    async def _get_yield_tokens(self, chain: str, api_key: str) -> dict:
+        """Get yield token information by extracting from active markets"""
+        try:
+            # Get active markets first to extract yield token information
+            markets_result = await self._get_active_markets(chain, api_key)
+            
+            if not markets_result.get("success"):
+                return {
+                    "success": False,
+                    "error": f"Failed to get markets data for yield tokens: {markets_result.get('error', 'Unknown error')}"
+                }
+            
+            markets_data = markets_result.get("data", [])
+            
+            if not markets_data:
+                return {
+                    "success": True,
+                    "data": {
+                        "yield_tokens": [],
+                        "total_tokens": 0,
+                        "chain": chain,
+                        "message": "No active markets found"
+                    },
+                    "chain": chain,
+                    "timestamp": datetime.now().isoformat()
+                }
+            
+            # Extract unique yield tokens from markets
+            yield_tokens = []
+            seen_tokens = set()
+            
+            for market in markets_data:
+                # Ensure market is a dictionary
+                if not isinstance(market, dict):
+                    continue
+                    
+                # Extract token information from market data
+                token_info = {}
+                
+                if 'underlyingAsset' in market:
+                    token_info['symbol'] = market['underlyingAsset']
+                
+                if 'marketAddress' in market:
+                    token_info['market_address'] = market['marketAddress']
+                
+                if 'apy' in market and market['apy']:
+                    try:
+                        token_info['apy'] = float(market['apy'])
+                    except (ValueError, TypeError):
+                        pass
+                
+                if 'liquidity' in market and market['liquidity']:
+                    try:
+                        token_info['liquidity'] = float(market['liquidity'])
+                    except (ValueError, TypeError):
+                        pass
+                
+                if 'expiry' in market:
+                    token_info['expiry'] = market['expiry']
+                
+                # Use market address as unique identifier
+                token_id = market.get('marketAddress', market.get('underlyingAsset', ''))
+                if token_id and token_id not in seen_tokens:
+                    seen_tokens.add(token_id)
+                    yield_tokens.append(token_info)
+            
+            return {
+                "success": True,
+                "data": {
+                    "yield_tokens": yield_tokens,
+                    "total_tokens": len(yield_tokens),
+                    "chain": chain
+                },
+                "chain": chain,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting yield tokens: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to get yield tokens: {str(e)}"
+            }
+    
+    async def _get_liquidity_data(self, chain: str, api_key: str) -> dict:
+        """Get liquidity data by aggregating from active markets"""
+        try:
+            # Get active markets first to extract liquidity information
+            markets_result = await self._get_active_markets(chain, api_key)
+            
+            if not markets_result.get("success"):
+                return {
+                    "success": False,
+                    "error": f"Failed to get markets data for liquidity: {markets_result.get('error', 'Unknown error')}"
+                }
+            
+            markets_data = markets_result.get("data", [])
+            
+            if not markets_data:
+                return {
+                    "success": True,
+                    "data": {
+                        "total_liquidity": 0,
+                        "markets_with_liquidity": 0,
+                        "average_liquidity": 0,
+                        "liquidity_by_market": [],
+                        "chain": chain,
+                        "message": "No active markets found"
+                    },
+                    "chain": chain,
+                    "timestamp": datetime.now().isoformat()
+                }
+            
+            # Calculate liquidity statistics
+            total_liquidity = 0
+            markets_with_liquidity = 0
+            liquidity_by_market = []
+            
+            for market in markets_data:
+                # Ensure market is a dictionary
+                if not isinstance(market, dict):
+                    continue
+                    
+                market_liquidity = 0
+                if 'liquidity' in market and market['liquidity']:
+                    try:
+                        market_liquidity = float(market['liquidity'])
+                        total_liquidity += market_liquidity
+                        markets_with_liquidity += 1
+                    except (ValueError, TypeError):
+                        pass
+                
+                liquidity_by_market.append({
+                    'market_address': market.get('marketAddress', 'Unknown'),
+                    'underlying_asset': market.get('underlyingAsset', 'Unknown'),
+                    'liquidity': market_liquidity,
+                    'apy': float(market.get('apy', 0)) if market.get('apy') else 0
+                })
+            
+            # Sort by liquidity (highest first)
+            liquidity_by_market.sort(key=lambda x: x['liquidity'], reverse=True)
+            
+            average_liquidity = total_liquidity / markets_with_liquidity if markets_with_liquidity > 0 else 0
+            
+            return {
+                "success": True,
+                "data": {
+                    "total_liquidity": round(total_liquidity, 2),
+                    "markets_with_liquidity": markets_with_liquidity,
+                    "average_liquidity": round(average_liquidity, 2),
+                    "liquidity_by_market": liquidity_by_market,
+                    "chain": chain
+                },
+                "chain": chain,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting liquidity data: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to get liquidity data: {str(e)}"
             }

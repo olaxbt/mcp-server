@@ -13,8 +13,10 @@ from .tools.defi_tools import AaveTool
 from .tools.currency_tools import CurrencyConverterTool
 from .tools.analytics_tools import LunarCrushTool, CoinDeskTool, PumpNewsTool, PumpFunTool, GMGNTool, MerklTool
 from .tools.social_tools import YouTubeTool, TwitterTool, RedditTool
-from .tools.communication_tools import GmailTool, GoogleCalendarTool, SlackTool
-from .tools.utility_tools import OpenWeatherTool, GoogleMapsTool, JiraTool, NotificationTool
+from .tools.utility_tools import OpenWeatherTool, GoogleMapsTool, JiraTool
+from .tools.metasleuth_wallet_tool import MetaSleuthWalletTool
+from .tools.chainbase_balance_tool import ChainBaseBalanceTool
+from .tools.dune_tools import DuneQueryTool
 
 # Export all tools for easy importing
 __all__ = [
@@ -54,15 +56,17 @@ __all__ = [
     "TwitterTool",
     "RedditTool",
     
-    # Communication
-    "GmailTool",
-    "GoogleCalendarTool",
-    "SlackTool",
     
     # Utility
     "OpenWeatherTool",
     "GoogleMapsTool",
     "JiraTool",
-    "NotificationTool"
+    
+    # Wallet Analytics
+    "MetaSleuthWalletTool",
+    "ChainBaseBalanceTool",
+    
+    # Blockchain Data
+    "DuneQueryTool"
 ]
 

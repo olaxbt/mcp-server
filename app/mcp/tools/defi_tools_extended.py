@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import aiohttp
+import json
 import os
 from typing import Any, Dict, List, Optional
 from datetime import datetime
@@ -73,7 +74,10 @@ class DefiLlamaTool(MCPTool):
             chain = arguments.get("chain")
             token_address = arguments.get("token_address")
             
-            if action == "get_protocols":
+            # Validate action
+            if not action:
+                result = {"success": False, "error": "Action is required. Please select an action."}
+            elif action == "get_protocols":
                 result = await self._get_protocols()
             elif action == "get_protocol_tvl":
                 if not protocol:
@@ -93,7 +97,7 @@ class DefiLlamaTool(MCPTool):
                 else:
                     result = await self._get_historical_tvl(protocol)
             else:
-                result = {"success": False, "error": f"Unknown action: {action}"}
+                result = {"success": False, "error": f"Unknown action: '{action}'. Valid actions are: get_protocols, get_protocol_tvl, get_token_prices, get_chains, get_historical_tvl"}
             
             return [result]
         finally:
@@ -102,15 +106,27 @@ class DefiLlamaTool(MCPTool):
     async def _get_protocols(self) -> dict:
         try:
             url = f"{self.base_url}/protocols"
+            headers = {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
             session = await self._get_session()
-            async with session.get(url) as response:
+            async with session.get(url, headers=headers) as response:
                 if response.status == 200:
-                    data = await response.json()
-                    return {
-                        "success": True,
-                        "data": data,
-                        "timestamp": datetime.now().isoformat()
-                    }
+                    try:
+                        text_content = await response.text()
+                        data = json.loads(text_content)
+                        return {
+                            "success": True,
+                            "data": data,
+                            "timestamp": datetime.now().isoformat()
+                        }
+                    except Exception as json_error:
+                        content_type = response.headers.get('content-type', 'Not specified')
+                        return {
+                            "success": False,
+                            "error": f"Failed to parse JSON response (type: {content_type}). Error: {str(json_error)}. Response: {text_content[:200]}..."
+                        }
                 else:
                     return {"success": False, "error": f"API request failed with status {response.status}"}
         except Exception as e:
@@ -119,16 +135,28 @@ class DefiLlamaTool(MCPTool):
     async def _get_protocol_tvl(self, protocol: str) -> dict:
         try:
             url = f"{self.base_url}/protocol/{protocol}"
+            headers = {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
             session = await self._get_session()
-            async with session.get(url) as response:
+            async with session.get(url, headers=headers) as response:
                 if response.status == 200:
-                    data = await response.json()
-                    return {
-                        "success": True,
-                        "data": data,
-                        "protocol": protocol,
-                        "timestamp": datetime.now().isoformat()
-                    }
+                    try:
+                        text_content = await response.text()
+                        data = json.loads(text_content)
+                        return {
+                            "success": True,
+                            "data": data,
+                            "protocol": protocol,
+                            "timestamp": datetime.now().isoformat()
+                        }
+                    except Exception as json_error:
+                        content_type = response.headers.get('content-type', 'Not specified')
+                        return {
+                            "success": False,
+                            "error": f"Failed to parse JSON response (type: {content_type}). Error: {str(json_error)}. Response: {text_content[:200]}..."
+                        }
                 else:
                     return {"success": False, "error": f"API request failed with status {response.status}"}
         except Exception as e:
@@ -137,16 +165,28 @@ class DefiLlamaTool(MCPTool):
     async def _get_token_prices(self, token_address: str) -> dict:
         try:
             url = f"{self.base_url}/prices/current/{token_address}"
+            headers = {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
             session = await self._get_session()
-            async with session.get(url) as response:
+            async with session.get(url, headers=headers) as response:
                 if response.status == 200:
-                    data = await response.json()
-                    return {
-                        "success": True,
-                        "data": data,
-                        "token_address": token_address,
-                        "timestamp": datetime.now().isoformat()
-                    }
+                    try:
+                        text_content = await response.text()
+                        data = json.loads(text_content)
+                        return {
+                            "success": True,
+                            "data": data,
+                            "token_address": token_address,
+                            "timestamp": datetime.now().isoformat()
+                        }
+                    except Exception as json_error:
+                        content_type = response.headers.get('content-type', 'Not specified')
+                        return {
+                            "success": False,
+                            "error": f"Failed to parse JSON response (type: {content_type}). Error: {str(json_error)}. Response: {text_content[:200]}..."
+                        }
                 else:
                     return {"success": False, "error": f"API request failed with status {response.status}"}
         except Exception as e:
@@ -155,15 +195,27 @@ class DefiLlamaTool(MCPTool):
     async def _get_chains(self) -> dict:
         try:
             url = f"{self.base_url}/chains"
+            headers = {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
             session = await self._get_session()
-            async with session.get(url) as response:
+            async with session.get(url, headers=headers) as response:
                 if response.status == 200:
-                    data = await response.json()
-                    return {
-                        "success": True,
-                        "data": data,
-                        "timestamp": datetime.now().isoformat()
-                    }
+                    try:
+                        text_content = await response.text()
+                        data = json.loads(text_content)
+                        return {
+                            "success": True,
+                            "data": data,
+                            "timestamp": datetime.now().isoformat()
+                        }
+                    except Exception as json_error:
+                        content_type = response.headers.get('content-type', 'Not specified')
+                        return {
+                            "success": False,
+                            "error": f"Failed to parse JSON response (type: {content_type}). Error: {str(json_error)}. Response: {text_content[:200]}..."
+                        }
                 else:
                     return {"success": False, "error": f"API request failed with status {response.status}"}
         except Exception as e:
@@ -172,16 +224,28 @@ class DefiLlamaTool(MCPTool):
     async def _get_historical_tvl(self, protocol: str) -> dict:
         try:
             url = f"{self.base_url}/protocol/{protocol}/historical"
+            headers = {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
             session = await self._get_session()
-            async with session.get(url) as response:
+            async with session.get(url, headers=headers) as response:
                 if response.status == 200:
-                    data = await response.json()
-                    return {
-                        "success": True,
-                        "data": data,
-                        "protocol": protocol,
-                        "timestamp": datetime.now().isoformat()
-                    }
+                    try:
+                        text_content = await response.text()
+                        data = json.loads(text_content)
+                        return {
+                            "success": True,
+                            "data": data,
+                            "protocol": protocol,
+                            "timestamp": datetime.now().isoformat()
+                        }
+                    except Exception as json_error:
+                        content_type = response.headers.get('content-type', 'Not specified')
+                        return {
+                            "success": False,
+                            "error": f"Failed to parse JSON response (type: {content_type}). Error: {str(json_error)}. Response: {text_content[:200]}..."
+                        }
                 else:
                     return {"success": False, "error": f"API request failed with status {response.status}"}
         except Exception as e:
@@ -232,10 +296,10 @@ class DeribitTool(MCPTool):
                 },
                 "api_key": {
                     "type": "string",
-                    "description": "Deribit API key (required)"
+                    "description": "Deribit API key (optional for public data)"
                 }
             },
-            "required": ["action", "api_key"]
+            "required": ["action"]
         }
     
     async def _get_session(self):
@@ -255,8 +319,8 @@ class DeribitTool(MCPTool):
             instrument_name = arguments.get("instrument_name")
             currency = arguments.get("currency", "BTC")
             
-            if not api_key:
-                return [{"type": "text", "text": "❌ Error: Deribit API key is required. Please provide your API key."}]
+            # Note: Most Deribit public endpoints don't require API key
+            # API key is optional for public data access
             
             if action == "get_instruments":
                 result = await self._get_instruments(currency)
@@ -287,7 +351,7 @@ class DeribitTool(MCPTool):
     async def _get_instruments(self, currency: str) -> dict:
         try:
             url = f"{self.base_url}/public/get_instruments"
-            params = {"currency": currency, "kind": "all"}
+            params = {"currency": currency}
             
             session = await self._get_session()
             async with session.get(url, params=params) as response:

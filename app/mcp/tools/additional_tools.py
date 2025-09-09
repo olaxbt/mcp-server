@@ -9,21 +9,21 @@ from .mcp_tool import MCPTool
 
 logger = logging.getLogger(__name__)
 
-class PumpFunDataTool(MCPTool):
-    """PumpFun Data MCP tool for accessing Solana token launch data"""
+class SolanaTokenAnalysisTool(MCPTool):
+    """Solana Token Analysis MCP tool for accessing Solana token data, trends, and analysis"""
     
     def __init__(self):
         self.session = None
-        # Note: PumpFun Data API key will be provided by user
-        self.base_url = "https://api.pumpfun.com"
+        # Using CoinGecko API for Solana token data
+        self.base_url = "https://api.coingecko.com/api/v3"
         
     @property
     def name(self) -> str:
-        return "pumpfun_data"
+        return "solana_token_analysis"
     
     @property
     def description(self) -> str:
-        return "Access PumpFun data for Solana token launches, social sentiment, and pump detection"
+        return "Access Solana token data, trending tokens, market analysis, and pump detection using CoinGecko API"
     
     @property
     def input_schema(self) -> Dict[str, Any]:
@@ -33,34 +33,40 @@ class PumpFunDataTool(MCPTool):
                 "action": {
                     "type": "string",
                     "enum": [
+                        "get_trending_solana_tokens",
+                        "get_token_analysis",
                         "get_pump_detection",
-                        "get_social_sentiment",
-                        "get_token_launches",
-                        "get_market_alerts",
-                        "get_trending_coins"
+                        "get_market_overview",
+                        "get_token_price_history"
                     ],
                     "description": "Action to perform"
                 },
-                "symbol": {
+                "token_id": {
                     "type": "string",
-                    "description": "Token symbol"
+                    "description": "Token ID (e.g., 'solana', 'usdc', 'ray') for token-specific actions"
                 },
                 "limit": {
                     "type": "integer",
                     "default": 10,
                     "description": "Maximum number of results"
                 },
-                "api_key": {
-                    "type": "string",
-                    "description": "PumpFun Data API key (required)"
+                "days": {
+                    "type": "integer",
+                    "default": 7,
+                    "description": "Number of days for price history (1, 7, 14, 30, 90, 365, max)"
                 }
             },
-            "required": ["action", "api_key"]
+            "required": ["action"]
         }
     
     async def _get_session(self):
         if self.session is None:
-            self.session = aiohttp.ClientSession()
+            import ssl
+            ssl_context = ssl.create_default_context()
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
+            connector = aiohttp.TCPConnector(ssl=ssl_context)
+            self.session = aiohttp.ClientSession(connector=connector)
         return self.session
     
     async def _cleanup_session(self):
@@ -71,23 +77,24 @@ class PumpFunDataTool(MCPTool):
     async def execute(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
         try:
             action = arguments.get("action")
-            api_key = arguments.get("api_key")
-            symbol = arguments.get("symbol")
+            token_id = arguments.get("token_id")
             limit = arguments.get("limit", 10)
+            days = arguments.get("days", 7)
             
-            if not api_key:
-                return [{"type": "text", "text": "❌ Error: PumpFun Data API key is required. Please provide your API key."}]
-            
-            if action == "get_pump_detection":
-                result = await self._get_pump_detection(symbol, limit, **arguments)
-            elif action == "get_social_sentiment":
-                result = await self._get_social_sentiment(symbol, limit, **arguments)
-            elif action == "get_token_launches":
-                result = await self._get_token_launches(limit, **arguments)
-            elif action == "get_market_alerts":
-                result = await self._get_market_alerts(limit, **arguments)
-            elif action == "get_trending_coins":
-                result = await self._get_trending_coins(limit, **arguments)
+            if action == "get_trending_solana_tokens":
+                result = await self._get_trending_solana_tokens(limit)
+            elif action == "get_token_analysis":
+                if not token_id:
+                    return [{"type": "text", "text": "❌ Error: Token ID is required for this action."}]
+                result = await self._get_token_analysis(token_id)
+            elif action == "get_pump_detection":
+                result = await self._get_pump_detection(limit)
+            elif action == "get_market_overview":
+                result = await self._get_market_overview()
+            elif action == "get_token_price_history":
+                if not token_id:
+                    return [{"type": "text", "text": "❌ Error: Token ID is required for this action."}]
+                result = await self._get_token_price_history(token_id, days)
             else:
                 result = {"type": "text", "text": f"❌ Error: Unknown action: {action}"}
             
@@ -95,26 +102,95 @@ class PumpFunDataTool(MCPTool):
         finally:
             await self._cleanup_session()
     
-    async def _get_pump_detection(self, symbol: str, limit: int, **kwargs) -> dict:
+    async def _get_trending_solana_tokens(self, limit: int) -> dict:
         try:
-            url = f"{self.base_url}/pump-detection"
-            params = {"limit": limit}
-            if symbol:
-                params["symbol"] = symbol
-            
-            headers = {}
-            api_key = kwargs.get("api_key")
-            if api_key:
-                headers["Authorization"] = f"Bearer {api_key}"
+            # Get trending Solana tokens from CoinGecko
+            url = f"{self.base_url}/coins/markets"
+            params = {
+                "vs_currency": "usd",
+                "category": "solana-ecosystem",
+                "order": "market_cap_desc",
+                "per_page": limit,
+                "page": 1,
+                "sparkline": "false"
+            }
             
             session = await self._get_session()
-            async with session.get(url, params=params, headers=headers) as response:
+            async with session.get(url, params=params) as response:
                 if response.status == 200:
                     data = await response.json()
                     return {
                         "success": True,
-                        "data": data,
-                        "symbol": symbol,
+                        "data": {
+                            "trending_solana_tokens": data,
+                            "analysis": "Top Solana ecosystem tokens by market cap",
+                            "note": "Data provided by CoinGecko API"
+                        },
+                        "timestamp": datetime.now().isoformat()
+                    }
+                else:
+                    return {"success": False, "error": f"API request failed with status {response.status}"}
+        except Exception as e:
+            return {"success": False, "error": f"Failed to get trending Solana tokens: {str(e)}"}
+    
+    async def _get_token_analysis(self, token_id: str) -> dict:
+        try:
+            # Get detailed token analysis from CoinGecko
+            url = f"{self.base_url}/coins/{token_id}"
+            params = {
+                "localization": "false",
+                "tickers": "false",
+                "market_data": "true",
+                "community_data": "true",
+                "developer_data": "true",
+                "sparkline": "false"
+            }
+            
+            session = await self._get_session()
+            async with session.get(url, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    return {
+                        "success": True,
+                        "data": {
+                            "token_analysis": data,
+                            "analysis_type": "Comprehensive token analysis including market data, community metrics, and developer activity",
+                            "note": "Data provided by CoinGecko API"
+                        },
+                        "token_id": token_id,
+                        "timestamp": datetime.now().isoformat()
+                    }
+                else:
+                    return {"success": False, "error": f"API request failed with status {response.status}"}
+        except Exception as e:
+            return {"success": False, "error": f"Failed to get token analysis: {str(e)}"}
+    
+    async def _get_pump_detection(self, limit: int) -> dict:
+        try:
+            # Get coins with highest price changes (potential pumps)
+            url = f"{self.base_url}/coins/markets"
+            params = {
+                "vs_currency": "usd",
+                "order": "price_change_percentage_24h_desc",
+                "per_page": limit,
+                "page": 1,
+                "sparkline": "false"
+            }
+            
+            session = await self._get_session()
+            async with session.get(url, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    # Filter for significant price increases (potential pumps)
+                    pump_candidates = [coin for coin in data if coin.get('price_change_percentage_24h', 0) > 10]
+                    
+                    return {
+                        "success": True,
+                        "data": {
+                            "pump_candidates": pump_candidates,
+                            "analysis": "Tokens with significant 24h price increases (potential pump detection)",
+                            "note": "Data provided by CoinGecko API - showing tokens with >10% 24h price increase"
+                        },
                         "timestamp": datetime.now().isoformat()
                     }
                 else:
@@ -122,104 +198,58 @@ class PumpFunDataTool(MCPTool):
         except Exception as e:
             return {"success": False, "error": f"Failed to get pump detection: {str(e)}"}
     
-    async def _get_social_sentiment(self, symbol: str, limit: int, **kwargs) -> dict:
+    async def _get_market_overview(self) -> dict:
         try:
-            url = f"{self.base_url}/social-sentiment"
-            params = {"limit": limit}
-            if symbol:
-                params["symbol"] = symbol
-            
-            headers = {}
-            api_key = kwargs.get("api_key")
-            if api_key:
-                headers["Authorization"] = f"Bearer {api_key}"
+            # Get global market overview
+            url = f"{self.base_url}/global"
             
             session = await self._get_session()
-            async with session.get(url, params=params, headers=headers) as response:
+            async with session.get(url) as response:
                 if response.status == 200:
                     data = await response.json()
                     return {
                         "success": True,
-                        "data": data,
-                        "symbol": symbol,
+                        "data": {
+                            "market_overview": data,
+                            "analysis": "Global cryptocurrency market overview including total market cap, volume, and market dominance",
+                            "note": "Data provided by CoinGecko API"
+                        },
                         "timestamp": datetime.now().isoformat()
                     }
                 else:
                     return {"success": False, "error": f"API request failed with status {response.status}"}
         except Exception as e:
-            return {"success": False, "error": f"Failed to get social sentiment: {str(e)}"}
+            return {"success": False, "error": f"Failed to get market overview: {str(e)}"}
     
-    async def _get_token_launches(self, limit: int, **kwargs) -> dict:
+    async def _get_token_price_history(self, token_id: str, days: int) -> dict:
         try:
-            url = f"{self.base_url}/token-launches"
-            params = {"limit": limit}
-            
-            headers = {}
-            api_key = kwargs.get("api_key")
-            if api_key:
-                headers["Authorization"] = f"Bearer {api_key}"
+            # Get token price history
+            url = f"{self.base_url}/coins/{token_id}/market_chart"
+            params = {
+                "vs_currency": "usd",
+                "days": days,
+                "interval": "daily" if days > 1 else "hourly"
+            }
             
             session = await self._get_session()
-            async with session.get(url, params=params, headers=headers) as response:
+            async with session.get(url, params=params) as response:
                 if response.status == 200:
                     data = await response.json()
                     return {
                         "success": True,
-                        "data": data,
+                        "data": {
+                            "price_history": data,
+                            "analysis": f"Price history for {token_id} over {days} days",
+                            "note": "Data provided by CoinGecko API"
+                        },
+                        "token_id": token_id,
+                        "days": days,
                         "timestamp": datetime.now().isoformat()
                     }
                 else:
                     return {"success": False, "error": f"API request failed with status {response.status}"}
         except Exception as e:
-            return {"success": False, "error": f"Failed to get token launches: {str(e)}"}
-    
-    async def _get_market_alerts(self, limit: int, **kwargs) -> dict:
-        try:
-            url = f"{self.base_url}/market-alerts"
-            params = {"limit": limit}
-            
-            headers = {}
-            api_key = kwargs.get("api_key")
-            if api_key:
-                headers["Authorization"] = f"Bearer {api_key}"
-            
-            session = await self._get_session()
-            async with session.get(url, params=params, headers=headers) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {
-                        "success": True,
-                        "data": data,
-                        "timestamp": datetime.now().isoformat()
-                    }
-                else:
-                    return {"success": False, "error": f"API request failed with status {response.status}"}
-        except Exception as e:
-            return {"success": False, "error": f"Failed to get market alerts: {str(e)}"}
-    
-    async def _get_trending_coins(self, limit: int, **kwargs) -> dict:
-        try:
-            url = f"{self.base_url}/trending-coins"
-            params = {"limit": limit}
-            
-            headers = {}
-            api_key = kwargs.get("api_key")
-            if api_key:
-                headers["Authorization"] = f"Bearer {api_key}"
-            
-            session = await self._get_session()
-            async with session.get(url, params=params, headers=headers) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {
-                        "success": True,
-                        "data": data,
-                        "timestamp": datetime.now().isoformat()
-                    }
-                else:
-                    return {"success": False, "error": f"API request failed with status {response.status}"}
-        except Exception as e:
-            return {"success": False, "error": f"Failed to get trending coins: {str(e)}"}
+            return {"success": False, "error": f"Failed to get token price history: {str(e)}"}
 
 
 class CoinDeskAssetsTool(MCPTool):

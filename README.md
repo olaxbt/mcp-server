@@ -244,38 +244,24 @@ pip install -r requirements.txt
 python run.py
 ```
 
-3. **Test all tools:**
+3. **Add new service:**
 ```bash
-python scripts/test_tools.py
+python scripts/add_service.py
 ```
 
-4. **Test NFT marketplace specifically:**
-```bash
-python scripts/test_nft_tool.py
-```
+### Available Tools
 
-5. **Test tools with real data implementations:**
-```bash
-python scripts/test_real_data_tools.py
-```
-
-This will run comprehensive tests for all implemented tools including:
+The MCP server includes comprehensive tools for:
 - Cryptocurrency price data
 - DeFi protocol interactions
 - Portfolio tracking and analysis
 - Crypto news aggregation
-- NFT marketplace data (real API integrations)
-- Market analysis and technical indicators (real-time data)
-- Notification system (real market integration)
-- APY calculations (real protocol data)
-
-### Real Data Implementations
-
-The following tools now use real APIs instead of hardcoded data:
-
-- **MarketAnalysisTool**: Uses CoinGecko API for real-time price data, Fear & Greed Index API for sentiment, and calculates actual technical indicators
-- **APYCalculatorTool**: Fetches real DeFi protocol data from CoinGecko and calculates APY with actual market rates
-- **NotificationTool**: Integrates with CoinGecko API for real-time price checking and market summaries
+- NFT marketplace data
+- Market analysis and technical indicators
+- APY calculations
+- Social media integration
+- Communication tools
+- Utility functions
 
 All tools include comprehensive error handling and fallback to reasonable defaults when APIs are unavailable.
 

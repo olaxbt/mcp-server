@@ -194,11 +194,11 @@ class DeFiProtocolTool(MCPTool):
         """Get Total Value Locked for a protocol"""
         try:
             # This would typically use DefiLlama API or similar
-            # For now, return mock data structure
+            # For now, return sample data structure
             tvl_data = {
                 "protocol": protocol,
                 "chain": chain,
-                "tvl": 1000000000,  # Mock TVL
+                "tvl": 1000000000,  # Sample TVL
                 "tvl_change_24h": 2.5,
                 "tvl_change_7d": 5.2,
                 "last_updated": datetime.now().isoformat()

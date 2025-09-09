@@ -33,10 +33,29 @@ class MCPServer:
         """Setup CORS and other middleware"""
         self.app.add_middleware(
             CORSMiddleware,
-            allow_origins=["*"],
+            allow_origins=[
+                "https://internal-dev.olaxbt.xyz",
+                "https://olaxbt.xyz",
+                "https://www.olaxbt.xyz",
+                "http://localhost:5173",  # For local development
+                "http://localhost:3000",  # For local development
+            ],
             allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
+            allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"],
+            allow_headers=[
+                "Accept",
+                "Accept-Language",
+                "Content-Language",
+                "Content-Type",
+                "Authorization",
+                "X-Requested-With",
+                "Origin",
+                "Access-Control-Request-Method",
+                "Access-Control-Request-Headers"
+            ],
+            allow_origin_regex=r"https://.*\.olaxbt\.xyz",  # Allow all subdomains
+            expose_headers=["Content-Length", "Content-Type"],
+            max_age=86400,  # Cache preflight requests for 24 hours
         )
     
     def setup_routes(self):
@@ -49,6 +68,11 @@ class MCPServer:
         async def shutdown_event():
             await self.service_manager.shutdown()
         
+        @self.app.options("/{full_path:path}")
+        async def options_handler(full_path: str):
+            """Handle CORS preflight requests"""
+            return {"message": "CORS preflight handled"}
+        
         @self.app.get("/")
         async def root():
             return {
@@ -60,6 +84,14 @@ class MCPServer:
         @self.app.get("/health")
         async def health():
             return await self.router.get_health_status()
+        
+        @self.app.get("/ping")
+        async def ping():
+            return {
+                "message": "pong",
+                "timestamp": asyncio.get_event_loop().time(),
+                "status": "ok"
+            }
         
         @self.app.get("/services")
         async def list_services():

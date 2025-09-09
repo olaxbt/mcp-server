@@ -1407,9 +1407,9 @@ class RedditTool(MCPTool):
             await self.session.close()
             self.session = None
     
-    async def _get_access_token(self):
+    async def _get_access_token(self, client_id, client_secret, user_agent):
         """Get Reddit OAuth access token"""
-        if not self.client_id or not self.client_secret:
+        if not client_id or not client_secret:
             return None
         
         try:
@@ -1421,14 +1421,14 @@ class RedditTool(MCPTool):
             auth_data.add_field('grant_type', 'client_credentials')
             
             auth_headers = {
-                'User-Agent': self.user_agent
+                'User-Agent': user_agent
             }
             
             async with session.post(
                 auth_url,
                 data=auth_data,
                 headers=auth_headers,
-                auth=aiohttp.BasicAuth(self.client_id, self.client_secret)
+                auth=aiohttp.BasicAuth(client_id, client_secret)
             ) as response:
                 if response.status == 200:
                     token_data = await response.json()
@@ -1439,21 +1439,21 @@ class RedditTool(MCPTool):
         except Exception as e:
             return None
     
-    async def _make_reddit_request(self, endpoint: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def _make_reddit_request(self, endpoint: str, client_id: str, client_secret: str, user_agent: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """Make authenticated request to Reddit API"""
         try:
             session = await self._get_session()
             
             # Get access token if not available
             if not self.access_token:
-                await self._get_access_token()
+                await self._get_access_token(client_id, client_secret, user_agent)
             
             if not self.access_token:
                 return {"success": False, "error": "Failed to authenticate with Reddit API"}
             
             headers = {
                 'Authorization': f'Bearer {self.access_token}',
-                'User-Agent': self.user_agent
+                'User-Agent': user_agent
             }
             
             url = f"{self.reddit_api_url}{endpoint}"
@@ -1484,7 +1484,7 @@ class RedditTool(MCPTool):
             'type': 'link'
         }
         
-        result = await self._make_reddit_request('/search', params)
+        result = await self._make_reddit_request('/search', kwargs.get('client_id'), kwargs.get('client_secret'), kwargs.get('user_agent', 'MCP-Reddit-Tool/1.0'), params)
         return [result]
     
     async def _get_subreddit_posts(self, **kwargs) -> List[Dict[str, Any]]:
@@ -1503,7 +1503,7 @@ class RedditTool(MCPTool):
         }
         
         endpoint = f'/r/{subreddit}/{sort}'
-        result = await self._make_reddit_request(endpoint, params)
+        result = await self._make_reddit_request(endpoint, kwargs.get('client_id'), kwargs.get('client_secret'), kwargs.get('user_agent', 'MCP-Reddit-Tool/1.0'), params)
         return [result]
     
     async def _get_post_comments(self, **kwargs) -> List[Dict[str, Any]]:
@@ -1520,7 +1520,7 @@ class RedditTool(MCPTool):
         }
         
         endpoint = f'/comments/{post_id}'
-        result = await self._make_reddit_request(endpoint, params)
+        result = await self._make_reddit_request(endpoint, kwargs.get('client_id'), kwargs.get('client_secret'), kwargs.get('user_agent', 'MCP-Reddit-Tool/1.0'), params)
         return [result]
     
     async def _get_user_posts(self, **kwargs) -> List[Dict[str, Any]]:
@@ -1538,7 +1538,7 @@ class RedditTool(MCPTool):
         }
         
         endpoint = f'/user/{username}/submitted'
-        result = await self._make_reddit_request(endpoint, params)
+        result = await self._make_reddit_request(endpoint, kwargs.get('client_id'), kwargs.get('client_secret'), kwargs.get('user_agent', 'MCP-Reddit-Tool/1.0'), params)
         return [result]
     
     async def _get_user_comments(self, **kwargs) -> List[Dict[str, Any]]:
@@ -1556,7 +1556,7 @@ class RedditTool(MCPTool):
         }
         
         endpoint = f'/user/{username}/comments'
-        result = await self._make_reddit_request(endpoint, params)
+        result = await self._make_reddit_request(endpoint, kwargs.get('client_id'), kwargs.get('client_secret'), kwargs.get('user_agent', 'MCP-Reddit-Tool/1.0'), params)
         return [result]
     
     async def _get_subreddit_info(self, **kwargs) -> List[Dict[str, Any]]:
@@ -1566,7 +1566,7 @@ class RedditTool(MCPTool):
             return [{"success": False, "error": "subreddit parameter is required"}]
         
         endpoint = f'/r/{subreddit}/about'
-        result = await self._make_reddit_request(endpoint)
+        result = await self._make_reddit_request(endpoint, kwargs.get('client_id'), kwargs.get('client_secret'), kwargs.get('user_agent', 'MCP-Reddit-Tool/1.0'))
         return [result]
     
     async def _get_user_info(self, **kwargs) -> List[Dict[str, Any]]:
@@ -1576,7 +1576,7 @@ class RedditTool(MCPTool):
             return [{"success": False, "error": "username parameter is required"}]
         
         endpoint = f'/user/{username}/about'
-        result = await self._make_reddit_request(endpoint)
+        result = await self._make_reddit_request(endpoint, kwargs.get('client_id'), kwargs.get('client_secret'), kwargs.get('user_agent', 'MCP-Reddit-Tool/1.0'))
         return [result]
     
     async def _get_trending_subreddits(self, **kwargs) -> List[Dict[str, Any]]:
@@ -1588,7 +1588,7 @@ class RedditTool(MCPTool):
         }
         
         endpoint = '/subreddits/popular'
-        result = await self._make_reddit_request(endpoint, params)
+        result = await self._make_reddit_request(endpoint, kwargs.get('client_id'), kwargs.get('client_secret'), kwargs.get('user_agent', 'MCP-Reddit-Tool/1.0'), params)
         return [result]
     
     async def _get_hot_posts(self, **kwargs) -> List[Dict[str, Any]]:
@@ -1600,7 +1600,7 @@ class RedditTool(MCPTool):
         }
         
         endpoint = '/hot'
-        result = await self._make_reddit_request(endpoint, params)
+        result = await self._make_reddit_request(endpoint, kwargs.get('client_id'), kwargs.get('client_secret'), kwargs.get('user_agent', 'MCP-Reddit-Tool/1.0'), params)
         return [result]
     
     async def _get_new_posts(self, **kwargs) -> List[Dict[str, Any]]:
@@ -1612,7 +1612,7 @@ class RedditTool(MCPTool):
         }
         
         endpoint = '/new'
-        result = await self._make_reddit_request(endpoint, params)
+        result = await self._make_reddit_request(endpoint, kwargs.get('client_id'), kwargs.get('client_secret'), kwargs.get('user_agent', 'MCP-Reddit-Tool/1.0'), params)
         return [result]
     
     async def _get_top_posts(self, **kwargs) -> List[Dict[str, Any]]:
@@ -1626,7 +1626,7 @@ class RedditTool(MCPTool):
         }
         
         endpoint = '/top'
-        result = await self._make_reddit_request(endpoint, params)
+        result = await self._make_reddit_request(endpoint, kwargs.get('client_id'), kwargs.get('client_secret'), kwargs.get('user_agent', 'MCP-Reddit-Tool/1.0'), params)
         return [result]
     
     async def _get_rising_posts(self, **kwargs) -> List[Dict[str, Any]]:
@@ -1638,7 +1638,7 @@ class RedditTool(MCPTool):
         }
         
         endpoint = '/rising'
-        result = await self._make_reddit_request(endpoint, params)
+        result = await self._make_reddit_request(endpoint, kwargs.get('client_id'), kwargs.get('client_secret'), kwargs.get('user_agent', 'MCP-Reddit-Tool/1.0'), params)
         return [result]
     
     async def execute(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:

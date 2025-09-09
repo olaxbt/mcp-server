@@ -50,9 +50,11 @@ from .analytics_tools import (
     CoinDeskTool,
     PumpNewsTool,
     PumpFunTool,
-    GMGNTool,
     MerklTool
 )
+
+# GMGN Trading Tool
+from .gmgn_trading_tool import GMGNTradingTool
 
 # Social Media Tools
 from .social_tools import (
@@ -61,19 +63,13 @@ from .social_tools import (
     RedditTool
 )
 
-# Communication Tools
-from .communication_tools import (
-    GmailTool,
-    GoogleCalendarTool,
-    SlackTool
-)
+# Communication Tools (removed - OAuth complexity)
 
 # Utility Tools
 from .utility_tools import (
     OpenWeatherTool,
     GoogleMapsTool,
-    JiraTool,
-    NotificationTool
+    JiraTool
 )
 
 # New MCP Tools
@@ -89,9 +85,14 @@ from .defi_tools_extended import (
     ChainbaseTokenPriceTool,
     ChainbaseTokenPriceHistoryTool
 )
+from .defillama_stablecoin_tools import DefiLlamaStablecoinTool
+from .defillama_yield_tools import DefiLlamaYieldTool
+from .defillama_dex_tools import DefiLlamaDexTool
+from .defillama_fees_tools import DefiLlamaFeesTool
+from .defillama_coin_tools import DefiLlamaCoinTool
 from .chainbase_nft_tool import ChainbaseNFTTool
 from .additional_tools import (
-    PumpFunDataTool,
+    SolanaTokenAnalysisTool,
     CoinDeskAssetsTool,
     BNBChainTool,
     ChainbaseBasicTool
@@ -102,8 +103,7 @@ from .defi_trading_tools import (
     CoinGeckoTool,
     EtherscanTool,
     BinanceTool,
-    UniswapTool,
-    ChainlinkTool
+    UniswapTool
 )
 
 
@@ -144,28 +144,29 @@ __all__ = [
     "CoinDeskTool",
     "PumpNewsTool",
     "PumpFunTool",
-    "GMGNTool",
+    "GMGNTradingTool",
     "MerklTool",
     
     # Social Tools
     "YouTubeTool",
     "TwitterTool",
     "RedditTool",
-    "GmailTool",
-    "GoogleCalendarTool",
-    "SlackTool",
     
     # Utility Tools
     "OpenWeatherTool",
     "GoogleMapsTool",
     "JiraTool",
-    "NotificationTool",
     
     # New MCP Tools
     "DuneQueryTool",
     "MeteoraTool",
     "PendleTool",
     "DefiLlamaTool",
+    "DefiLlamaStablecoinTool",
+    "DefiLlamaYieldTool",
+    "DefiLlamaDexTool",
+    "DefiLlamaFeesTool",
+    "DefiLlamaCoinTool",
     "DeribitTool",
     "ChainbaseTokenMetadataTool",
     "ChainbaseTokenTopHoldersTool",
@@ -183,7 +184,6 @@ __all__ = [
     "EtherscanTool",
     "BinanceTool",
     "UniswapTool",
-    "ChainlinkTool",
     
 
 

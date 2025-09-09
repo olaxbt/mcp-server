@@ -1609,8 +1609,9 @@ class PumpFunTool(MCPTool):
             params = {"symbol": symbol, "timeframe": timeframe}
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -1662,8 +1663,9 @@ class PumpFunTool(MCPTool):
             params = {"symbol": symbol, "timeframe": timeframe, "platform": platform}
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -1711,8 +1713,9 @@ class PumpFunTool(MCPTool):
             params = {"limit": limit, "timeframe": timeframe}
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -1760,8 +1763,9 @@ class PumpFunTool(MCPTool):
             params = {"symbol": symbol, "timeframe": timeframe}
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -1807,8 +1811,9 @@ class PumpFunTool(MCPTool):
                 params["symbol"] = symbol
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -1849,8 +1854,9 @@ class PumpFunTool(MCPTool):
             params = {"limit": limit, "timeframe": timeframe}
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -1896,8 +1902,9 @@ class PumpFunTool(MCPTool):
             params = {"symbols": ",".join(symbols), "limit": limit}
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -1944,8 +1951,9 @@ class PumpFunTool(MCPTool):
             params = {"symbol": symbol, "timeframe": timeframe}
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -1978,7 +1986,7 @@ class PumpFunTool(MCPTool):
                 "error": f"Failed to get risk assessment: {str(e)}"
             }
 
-class GMGNTool(MCPTool):
+# GMGNTool class removed - replacing with GMGNTradingTool
     def __init__(self):
         self.session = None
         self.gmgn_api_url = "https://api.gmgn.com/v1"
@@ -2103,8 +2111,9 @@ class GMGNTool(MCPTool):
             params = {"token": token, "timeframe": timeframe}
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -2157,8 +2166,9 @@ class GMGNTool(MCPTool):
             params = {"game": game, "timeframe": timeframe}
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -2207,8 +2217,9 @@ class GMGNTool(MCPTool):
             params = {"limit": limit, "category": category, "timeframe": timeframe}
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -2263,8 +2274,9 @@ class GMGNTool(MCPTool):
                 params["game"] = game
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -2320,8 +2332,9 @@ class GMGNTool(MCPTool):
                 params["game"] = game
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -2367,8 +2380,9 @@ class GMGNTool(MCPTool):
             params = {"limit": limit, "timeframe": timeframe, "category": category}
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -2413,8 +2427,9 @@ class GMGNTool(MCPTool):
             params = {"limit": limit, "category": category, "timeframe": timeframe}
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -2467,8 +2482,9 @@ class GMGNTool(MCPTool):
                 params["game"] = game
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -2636,8 +2652,9 @@ class MerklTool(MCPTool):
                 params["token"] = token
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -2681,8 +2698,9 @@ class MerklTool(MCPTool):
             params = {"chain": chain, "min_apy": min_apy, "limit": limit, "timeframe": timeframe}
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -2730,8 +2748,9 @@ class MerklTool(MCPTool):
                 params["token"] = token
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -2774,8 +2793,9 @@ class MerklTool(MCPTool):
             params = {"chain": chain, "timeframe": timeframe}
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -2833,8 +2853,9 @@ class MerklTool(MCPTool):
                 params["user_address"] = user_address
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -2883,8 +2904,9 @@ class MerklTool(MCPTool):
                 params["token"] = token
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -2935,8 +2957,9 @@ class MerklTool(MCPTool):
             params = {"chain": chain, "user_address": user_address, "limit": limit, "timeframe": timeframe}
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:
@@ -2995,8 +3018,9 @@ class MerklTool(MCPTool):
                 params["amount"] = amount
             
             headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            api_key = kwargs.get("api_key")
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             
             async with session.get(url, params=params, headers=headers) as response:
                 if response.status == 200:

@@ -19,10 +19,12 @@ logger = logging.getLogger(__name__)
 
 class AaveTool(MCPTool):
     def __init__(self):
-        self.session = None
+        super().__init__()  # Call parent constructor
         # Use working, current API endpoints
         self.defillama_api_url = "https://api.llama.fi"
         self.coingecko_api_url = "https://api.coingecko.com/api/v3"
+        self.aave_v3_api_url = "https://api.thegraph.com/subgraphs/name/aave/protocol-v3"
+
         self.supported_networks = {
             "ethereum": "ethereum",
             "polygon": "polygon", 
@@ -118,60 +120,64 @@ class AaveTool(MCPTool):
             network = kwargs.get("network", "ethereum")
             session = await self._get_session()
             
-            # Use Aave V3 API for pool data
-            url = f"{self.aave_v3_api_url}/reserves"
-            
-            async with session.get(url) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    
-                    # Filter for the specified network if needed
-                    reserves = data.get("reserves", [])
-                    
-                    # Calculate total TVL and format data
-                    total_tvl = 0
-                    formatted_reserves = []
-                    
-                    for reserve in reserves:
-                        if reserve.get("usageAsCollateralEnabledOnUser"):
-                            total_liquidity = float(reserve.get("totalLiquidity", 0))
-                            price_in_usd = float(reserve.get("priceInUsd", 0))
-                            tvl = total_liquidity * price_in_usd
-                            total_tvl += tvl
-                            
-                            formatted_reserves.append({
-                                "symbol": reserve.get("symbol"),
-                                "name": reserve.get("name"),
-                                "decimals": reserve.get("decimals"),
-                                "total_liquidity": reserve.get("totalLiquidity"),
-                                "available_liquidity": reserve.get("availableLiquidity"),
-                                "total_variable_debt": reserve.get("totalVariableDebt"),
-                                "total_stable_debt": reserve.get("totalStableDebt"),
-                                "liquidity_rate": reserve.get("liquidityRate"),
-                                "variable_borrow_rate": reserve.get("variableBorrowRate"),
-                                "stable_borrow_rate": reserve.get("stableBorrowRate"),
-                                "utilization_rate": reserve.get("usageRatio"),
-                                "price_in_usd": reserve.get("priceInUsd"),
-                                "collateral_enabled": reserve.get("usageAsCollateralEnabledOnUser"),
-                                "liquidation_threshold": reserve.get("liquidationThreshold"),
-                                "liquidation_bonus": reserve.get("liquidationBonus")
-                            })
-                    
-                    return {
-                        "success": True,
-                        "network": network,
-                        "data": {
-                            "total_tvl": f"${total_tvl:,.2f}",
-                            "total_reserves": len(formatted_reserves),
-                            "reserves": formatted_reserves[:10],  # Limit to first 10
-                            "timestamp": datetime.now().isoformat()
+            # Try Aave V3 API first
+            try:
+                url = f"{self.aave_v3_api_url}/reserves"
+                async with session.get(url) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        
+                        # Filter for the specified network if needed
+                        reserves = data.get("reserves", [])
+                        
+                        # Calculate total TVL and format data
+                        total_tvl = 0
+                        formatted_reserves = []
+                        
+                        for reserve in reserves:
+                            if reserve.get("usageAsCollateralEnabledOnUser"):
+                                total_liquidity = float(reserve.get("totalLiquidity", 0))
+                                price_in_usd = float(reserve.get("priceInUsd", 0))
+                                tvl = total_liquidity * price_in_usd
+                                total_tvl += tvl
+                                
+                                formatted_reserves.append({
+                                    "symbol": reserve.get("symbol"),
+                                    "name": reserve.get("name"),
+                                    "decimals": reserve.get("decimals"),
+                                    "total_liquidity": reserve.get("totalLiquidity"),
+                                    "available_liquidity": reserve.get("availableLiquidity"),
+                                    "total_variable_debt": reserve.get("totalVariableDebt"),
+                                    "total_stable_debt": reserve.get("totalStableDebt"),
+                                    "liquidity_rate": reserve.get("liquidityRate"),
+                                    "variable_borrow_rate": reserve.get("variableBorrowRate"),
+                                    "stable_borrow_rate": reserve.get("stableBorrowRate"),
+                                    "utilization_rate": reserve.get("usageRatio"),
+                                    "price_in_usd": reserve.get("priceInUsd"),
+                                    "collateral_enabled": reserve.get("usageAsCollateralEnabledOnUser"),
+                                    "liquidation_threshold": reserve.get("liquidationThreshold"),
+                                    "liquidation_bonus": reserve.get("liquidationBonus")
+                                })
+                        
+                        return {
+                            "success": True,
+                            "network": network,
+                            "source": "Aave V3 API",
+                            "data": {
+                                "total_tvl": f"${total_tvl:,.2f}",
+                                "total_reserves": len(formatted_reserves),
+                                "reserves": formatted_reserves[:10],  # Limit to first 10
+                                "timestamp": datetime.now().isoformat()
+                            }
                         }
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"Failed to fetch pool data: {response.status}"
-                    }
+            except Exception as aave_error:
+                logger.warning(f"Aave V3 API failed: {aave_error}")
+                return {
+                    "success": False,
+                    "error": f"Aave API is currently unavailable: {str(aave_error)}",
+                    "note": "This is an Aave MCP tool. When Aave services are down, we cannot provide alternative data sources."
+                }
+                
         except Exception as e:
             return {
                 "success": False,

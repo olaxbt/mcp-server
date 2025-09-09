@@ -14,7 +14,6 @@ from .tools import (
     PortfolioTrackerTool,
     NFTMarketplaceTool,
     MarketAnalysisTool,
-    NotificationTool,
     APYCalculatorTool,
     JupiterTool,
     RaydiumTool,
@@ -23,17 +22,14 @@ from .tools import (
     AaveTool,
     PumpNewsTool,
     PumpFunTool,
-    GMGNTool,
+    GMGNTradingTool,
     MerklTool,
     YouTubeTool,
-    GmailTool,
-    GoogleCalendarTool,
     TwitterTool,
     RedditTool,
     OpenWeatherTool,
     GoogleMapsTool,
     JiraTool,
-    SlackTool,
     CurrencyConverterTool,
     
     # New MCP Tools
@@ -41,6 +37,11 @@ from .tools import (
     MeteoraTool,
     PendleTool,
     DefiLlamaTool,
+    DefiLlamaStablecoinTool,
+    DefiLlamaYieldTool,
+    DefiLlamaDexTool,
+    DefiLlamaFeesTool,
+    DefiLlamaCoinTool,
     DeribitTool,
     ChainbaseTokenMetadataTool,
     ChainbaseTokenTopHoldersTool,
@@ -48,7 +49,7 @@ from .tools import (
     ChainbaseTokenPriceTool,
     ChainbaseTokenPriceHistoryTool,
     ChainbaseNFTTool,
-    PumpFunDataTool,
+    SolanaTokenAnalysisTool,
     CoinDeskAssetsTool,
     BNBChainTool,
     ChainbaseBasicTool,
@@ -58,7 +59,6 @@ from .tools import (
     EtherscanTool,
     BinanceTool,
     UniswapTool,
-    ChainlinkTool,
     
     # Blockchain Tools
 
@@ -90,7 +90,6 @@ class MCPRouter:
             "crypto_news": CryptoNewsTool(),
             "nft_marketplace": NFTMarketplaceTool(),
             "market_analysis": MarketAnalysisTool(),
-            "notification": NotificationTool(),
             "apy_calculator": APYCalculatorTool(),
             "jupiter": JupiterTool(),
             "raydium": RaydiumTool(),
@@ -99,17 +98,14 @@ class MCPRouter:
             "aave": AaveTool(),
             "pumpnews": PumpNewsTool(),
             "pumpfun": PumpFunTool(),
-            "gmgn": GMGNTool(),
+            "gmgn_trading": GMGNTradingTool(),
             "merkl": MerklTool(),
             "youtube": YouTubeTool(),
-            "gmail": GmailTool(),
-            "google_calendar": GoogleCalendarTool(),
             "twitter": TwitterTool(),
             "reddit": RedditTool(),
             "openweather": OpenWeatherTool(),
             "googlemaps": GoogleMapsTool(),
             "jira": JiraTool(),
-            "slack": SlackTool(),
             "currency_converter": CurrencyConverterTool(),
             
             # New MCP Tools
@@ -117,6 +113,11 @@ class MCPRouter:
             "meteora": MeteoraTool(),
             "pendle": PendleTool(),
             "defillama": DefiLlamaTool(),
+            "defillama_stablecoin": DefiLlamaStablecoinTool(),
+            "defillama_yield": DefiLlamaYieldTool(),
+            "defillama_dex": DefiLlamaDexTool(),
+            "defillama_fees": DefiLlamaFeesTool(),
+            "defillama_coin": DefiLlamaCoinTool(),
             "deribit": DeribitTool(),
             "chainbase_token_metadata": ChainbaseTokenMetadataTool(),
             "chainbase_token_top_holders": ChainbaseTokenTopHoldersTool(),
@@ -124,7 +125,7 @@ class MCPRouter:
             "chainbase_token_price": ChainbaseTokenPriceTool(),
             "chainbase_token_price_history": ChainbaseTokenPriceHistoryTool(),
             "chainbase_nft": ChainbaseNFTTool(),
-            "pumpfun_data": PumpFunDataTool(),
+            "solana_token_analysis": SolanaTokenAnalysisTool(),
             "coindesk_assets": CoinDeskAssetsTool(),
             "bnbchain": BNBChainTool(),
             "chainbase_basic": ChainbaseBasicTool(),
@@ -134,7 +135,7 @@ class MCPRouter:
             "etherscan": EtherscanTool(),
             "binance": BinanceTool(),
             "uniswap": UniswapTool(),
-            "chainlink": ChainlinkTool(),
+
             
             # Blockchain Tools
 
@@ -144,7 +145,7 @@ class MCPRouter:
 "metasleuth_wallet": MetaSleuthWalletTool(),
 
 # Business Intelligence Tools
-"apollo": ApolloTool()
+            "apollo": ApolloTool()
         }
         
         # Register all tools with validation rules

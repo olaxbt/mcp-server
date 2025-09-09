@@ -155,16 +155,17 @@ TOOL_CONFIGS = {
     
     # NFT Tools
     "nft_marketplace": {
-        "required_params": ["action", "opensea_api_key", "reservoir_api_key"],
+        "required_params": ["action"],
         "schema": {
             "type": "object",
             "properties": {
-                "action": {"type": "string", "description": "Action to perform", "enum": ["collection_info", "floor_price", "trading_volume", "recent_sales"]},
-                "opensea_api_key": {"type": "string", "description": "OpenSea API key (required for Ethereum/Polygon)"},
-                "reservoir_api_key": {"type": "string", "description": "Reservoir API key (required for Ethereum/Polygon)"},
-                "collection_slug": {"type": "string", "description": "Collection identifier"},
+                "action": {"type": "string", "description": "Action to perform", "enum": ["collection_info", "floor_price", "trading_volume", "recent_sales", "collection_stats"]},
+                "collection_slug": {"type": "string", "description": "Collection identifier (required for most actions)"},
                 "chain": {"type": "string", "description": "Blockchain network", "default": "ethereum"},
-                "limit": {"type": "integer", "description": "Number of results", "default": 10}
+                "time_period": {"type": "string", "description": "Time period for data", "default": "7d"},
+                "limit": {"type": "integer", "description": "Number of results", "default": 10},
+                "opensea_api_key": {"type": "string", "description": "OpenSea API key (at least one API key required)"},
+                "reservoir_api_key": {"type": "string", "description": "Reservoir API key (at least one API key required)"}
             }
         }
     },
@@ -222,15 +223,24 @@ TOOL_CONFIGS = {
         }
     },
     
-    "gmgn": {
-        "required_params": ["action", "api_key"],
+    "gmgn_trading": {
+        "required_params": ["action"],
         "schema": {
             "type": "object",
             "properties": {
-                "action": {"type": "string", "description": "Action to perform", "enum": ["get_gaming_data", "get_nft_collections", "get_market_stats"]},
-                "api_key": {"type": "string", "description": "GMGN API key (required)"},
-                "game": {"type": "string", "description": "Game identifier"},
-                "category": {"type": "string", "description": "Data category", "default": "all"}
+                "action": {
+                    "type": "string", 
+                    "description": "Action to perform", 
+                    "enum": [
+                        "get_api_info",
+                        "get_access_requirements",
+                        "get_alternative_apis"
+                    ]
+                },
+                "api_key": {
+                    "type": "string", 
+                    "description": "API key (optional - not required for informational tool)"
+                }
             }
         }
     },
@@ -240,10 +250,15 @@ TOOL_CONFIGS = {
         "schema": {
             "type": "object",
             "properties": {
-                "action": {"type": "string", "description": "Action to perform", "enum": ["get_campaigns", "get_rewards", "get_user_data"]},
+                "action": {"type": "string", "description": "Action to perform", "enum": ["get_concentrated_positions", "get_yield_farming_opportunities", "get_rewards_distribution", "get_protocol_analytics", "get_position_performance", "get_liquidity_pools", "get_user_positions", "get_rewards_calculation"]},
                 "api_key": {"type": "string", "description": "Merkl API key (required)"},
-                "network": {"type": "string", "description": "Blockchain network", "default": "ethereum"},
-                "user_address": {"type": "string", "description": "User wallet address (optional)"}
+                "chain": {"type": "string", "description": "Blockchain network (e.g., ethereum, polygon, arbitrum, optimism)", "default": "ethereum"},
+                "token": {"type": "string", "description": "Token address or symbol (e.g., USDC, WETH, 0x...)"},
+                "user_address": {"type": "string", "description": "User wallet address for position queries"},
+                "pool_address": {"type": "string", "description": "Liquidity pool address"},
+                "limit": {"type": "integer", "description": "Number of results to return", "default": 10},
+                "timeframe": {"type": "string", "description": "Timeframe for analysis (1h, 24h, 7d, 30d)", "default": "24h"},
+                "min_apy": {"type": "number", "description": "Minimum APY filter for yield opportunities", "default": 0}
             }
         }
     },
@@ -744,17 +759,7 @@ TOOL_CONFIGS = {
         }
     },
     
-    "chainlink": {
-        "required_params": ["action"],
-        "schema": {
-            "type": "object",
-            "properties": {
-                "action": {"type": "string", "description": "Action to perform", "enum": ["get_price_feed", "get_network_info", "get_node_info", "get_job_info"]},
-                "feed_address": {"type": "string", "description": "Price feed contract address"},
-                "network": {"type": "string", "description": "Network name", "default": "ethereum"}
-            }
-        }
-    },
+
     
 
     

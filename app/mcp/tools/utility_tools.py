@@ -486,7 +486,7 @@ class GoogleMapsTool(MCPTool):
         except Exception as e:
             return {"success": False, "error": f"Request failed: {str(e)}"}
     
-    async def _geocode(self, address: str, language: str = "en") -> List[Dict[str, Any]]:
+    async def _geocode(self, address: str, language: str = "en", **kwargs) -> List[Dict[str, Any]]:
         """Convert address to coordinates"""
         if not address:
             return [{"success": False, "error": "address parameter is required"}]
@@ -500,7 +500,7 @@ class GoogleMapsTool(MCPTool):
         result = await self._make_request("geocode/json", params, api_key)
         return [result]
     
-    async def _reverse_geocode(self, latitude: float, longitude: float, language: str = "en") -> List[Dict[str, Any]]:
+    async def _reverse_geocode(self, latitude: float, longitude: float, language: str = "en", **kwargs) -> List[Dict[str, Any]]:
         """Convert coordinates to address"""
         if latitude is None or longitude is None:
             return [{"success": False, "error": "latitude and longitude parameters are required"}]
@@ -515,7 +515,7 @@ class GoogleMapsTool(MCPTool):
         return [result]
     
     async def _get_directions(self, origin: str, destination: str, waypoints: str = None, 
-                            mode: str = "driving", language: str = "en") -> List[Dict[str, Any]]:
+                             mode: str = "driving", language: str = "en", **kwargs) -> List[Dict[str, Any]]:
         """Get directions between two points"""
         if not origin or not destination:
             return [{"success": False, "error": "origin and destination parameters are required"}]
@@ -535,7 +535,7 @@ class GoogleMapsTool(MCPTool):
         return [result]
     
     async def _search_places(self, query: str, latitude: float = None, longitude: float = None,
-                           radius: int = 5000, type: str = None, language: str = "en") -> List[Dict[str, Any]]:
+                            radius: int = 5000, type: str = None, language: str = "en", **kwargs) -> List[Dict[str, Any]]:
         """Search for places"""
         if not query:
             return [{"success": False, "error": "query parameter is required"}]
@@ -556,7 +556,7 @@ class GoogleMapsTool(MCPTool):
         result = await self._make_request("place/textsearch/json", params, api_key)
         return [result]
     
-    async def _get_place_details(self, place_id: str, language: str = "en") -> List[Dict[str, Any]]:
+    async def _get_place_details(self, place_id: str, language: str = "en", **kwargs) -> List[Dict[str, Any]]:
         """Get detailed information about a place"""
         if not place_id:
             return [{"success": False, "error": "place_id parameter is required"}]
@@ -571,7 +571,7 @@ class GoogleMapsTool(MCPTool):
         return [result]
     
     async def _get_nearby_places(self, latitude: float, longitude: float, radius: int = 5000,
-                               type: str = None, keyword: str = None, language: str = "en") -> List[Dict[str, Any]]:
+                                type: str = None, keyword: str = None, language: str = "en", **kwargs) -> List[Dict[str, Any]]:
         """Get nearby places"""
         if latitude is None or longitude is None:
             return [{"success": False, "error": "latitude and longitude parameters are required"}]
@@ -592,7 +592,7 @@ class GoogleMapsTool(MCPTool):
         return [result]
     
     async def _get_distance_matrix(self, origins: str, destinations: str, mode: str = "driving",
-                                 units: str = "metric", language: str = "en") -> List[Dict[str, Any]]:
+                                  units: str = "metric", language: str = "en", **kwargs) -> List[Dict[str, Any]]:
         """Get distance and duration matrix"""
         if not origins or not destinations:
             return [{"success": False, "error": "origins and destinations parameters are required"}]
@@ -609,7 +609,7 @@ class GoogleMapsTool(MCPTool):
         result = await self._make_request("distancematrix/json", params, api_key)
         return [result]
     
-    async def _get_elevation(self, latitude: float, longitude: float) -> List[Dict[str, Any]]:
+    async def _get_elevation(self, latitude: float, longitude: float, **kwargs) -> List[Dict[str, Any]]:
         """Get elevation for coordinates"""
         if latitude is None or longitude is None:
             return [{"success": False, "error": "latitude and longitude parameters are required"}]
@@ -622,7 +622,7 @@ class GoogleMapsTool(MCPTool):
         result = await self._make_request("elevation/json", params, api_key)
         return [result]
     
-    async def _get_timezone(self, latitude: float, longitude: float, timestamp: int = None) -> List[Dict[str, Any]]:
+    async def _get_timezone(self, latitude: float, longitude: float, timestamp: int = None, **kwargs) -> List[Dict[str, Any]]:
         """Get timezone information for coordinates"""
         if latitude is None or longitude is None:
             return [{"success": False, "error": "latitude and longitude parameters are required"}]
@@ -715,253 +715,6 @@ class GoogleMapsTool(MCPTool):
             return [{"type": "text", "text": f"❌ Error: Execution error: {str(e)}"}]
         finally:
             self._cleanup_session()
-
-
-class NotificationTool(MCPTool):
-    def __init__(self):
-        self.notifications = {}  # In-memory storage for demo
-        self.alert_types = ["price_alert", "news_alert", "portfolio_alert"]
-        self.session = None
-        self.coingecko_base_url = "https://api.coingecko.com/api/v3"
-    
-    @property
-    def name(self) -> str:
-        return "notification"
-    
-    @property
-    def description(self) -> str:
-        return "Set up and manage alerts and notifications for cryptocurrency prices, news, and portfolio events."
-    
-    @property
-    def input_schema(self) -> Dict[str, Any]:
-        return {
-            "type": "object",
-            "properties": {
-                "action": {
-                    "type": "string",
-                    "description": "Notification action to perform",
-                    "enum": ["create_alert", "list_alerts", "delete_alert", "test_alert"],
-                    "default": "list_alerts"
-                },
-                "alert_type": {
-                    "type": "string",
-                    "description": "Type of alert to create",
-                    "enum": ["price_alert", "news_alert", "portfolio_alert"],
-                    "default": None
-                },
-                "alert_id": {
-                    "type": "string",
-                    "description": "Alert identifier",
-                    "default": None
-                },
-                "coin_id": {
-                    "type": "string",
-                    "description": "CoinGecko coin ID (for price alerts)",
-                    "default": None
-                },
-                "price_threshold": {
-                    "type": "number",
-                    "description": "Price threshold for alerts",
-                    "default": None
-                },
-                "condition": {
-                    "type": "string",
-                    "description": "Alert condition (above/below)",
-                    "enum": ["above", "below"],
-                    "default": None
-                },
-                "keywords": {
-                    "type": "string",
-                    "description": "Keywords for news alerts",
-                    "default": None
-                }
-            },
-            "required": ["action"]
-        }
-    
-    async def execute(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
-        try:
-            action = arguments.get("action", "list_alerts")
-            
-            if action == "create_alert":
-                return await self._create_alert(arguments)
-            elif action == "list_alerts":
-                return await self._list_alerts()
-            elif action == "delete_alert":
-                return await self._delete_alert(arguments)
-            elif action == "test_alert":
-                return await self._test_alert(arguments)
-            else:
-                return [{"error": f"Unsupported action: {action}"}]
-                
-        except Exception as e:
-            logger.error(f"Notification tool error: {e}")
-            return [{"error": f"Notification operation failed: {str(e)}"}]
-    
-    async def _create_alert(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Create a new alert"""
-        alert_type = arguments.get("alert_type")
-        alert_id = arguments.get("alert_id", f"alert_{int(time.time())}")
-        
-        if not alert_type:
-            return [{"error": "alert_type is required for create_alert action"}]
-        
-        if alert_type not in self.alert_types:
-            return [{"error": f"Unsupported alert type: {alert_type}"}]
-        
-        alert_data = {
-            "id": alert_id,
-            "type": alert_type,
-            "created_at": datetime.now().isoformat(),
-            "active": True
-        }
-        
-        if alert_type == "price_alert":
-            coin_id = arguments.get("coin_id")
-            price_threshold = arguments.get("price_threshold")
-            condition = arguments.get("condition")
-            
-            if not all([coin_id, price_threshold, condition]):
-                return [{"error": "coin_id, price_threshold, and condition are required for price alerts"}]
-            
-            alert_data.update({
-                "coin_id": coin_id,
-                "price_threshold": price_threshold,
-                "condition": condition
-            })
-        
-        elif alert_type == "news_alert":
-            keywords = arguments.get("keywords")
-            if not keywords:
-                return [{"error": "keywords are required for news alerts"}]
-            
-            alert_data["keywords"] = keywords
-        
-        elif alert_type == "portfolio_alert":
-            alert_data["portfolio_threshold"] = arguments.get("portfolio_threshold", 1000)
-        
-        self.notifications[alert_id] = alert_data
-        
-        return [{"message": f"Alert {alert_id} created successfully", "alert": alert_data}]
-    
-    async def _list_alerts(self) -> List[Dict[str, Any]]:
-        """List all active alerts"""
-        active_alerts = [alert for alert in self.notifications.values() if alert.get("active", True)]
-        return [{"alerts": active_alerts, "total_count": len(active_alerts)}]
-    
-    async def _delete_alert(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Delete an alert"""
-        alert_id = arguments.get("alert_id")
-        
-        if not alert_id:
-            return [{"error": "alert_id is required for delete_alert action"}]
-        
-        if alert_id not in self.notifications:
-            return [{"error": f"Alert {alert_id} not found"}]
-        
-        deleted_alert = self.notifications.pop(alert_id)
-        return [{"message": f"Alert {alert_id} deleted successfully", "deleted_alert": deleted_alert}]
-    
-    async def _test_alert(self, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Test an alert with real market data"""
-        alert_id = arguments.get("alert_id")
-        
-        if not alert_id:
-            return [{"error": "alert_id is required for test_alert action"}]
-        
-        if alert_id not in self.notifications:
-            return [{"error": f"Alert {alert_id} not found"}]
-        
-        alert = self.notifications[alert_id]
-        
-        # Get real market data for testing
-        if alert["type"] == "price_alert":
-            current_price = await self._get_current_price(alert.get("coin_id"))
-            if current_price:
-                alert["current_price"] = current_price
-                alert["price_check"] = self._check_price_condition(
-                    current_price, 
-                    alert.get("price_threshold"), 
-                    alert.get("condition")
-                )
-            else:
-                alert["current_price"] = None
-                alert["price_check"] = {"triggered": False, "error": "Could not fetch current price"}
-        
-        # Simulate alert trigger with real data
-        test_notification = {
-            "alert_id": alert_id,
-            "triggered_at": datetime.now().isoformat(),
-            "message": f"Test notification for {alert['type']} alert",
-            "details": alert,
-            "market_data": await self._get_market_summary()
-        }
-        
-        return [{"test_notification": test_notification}]
-
-    async def _get_current_price(self, coin_id: str) -> Optional[float]:
-        """Get current price for a coin"""
-        try:
-            if self.session is None:
-                self.session = aiohttp.ClientSession()
-            
-            url = f"{self.coingecko_base_url}/simple/price"
-            params = {
-                "ids": coin_id,
-                "vs_currencies": "usd"
-            }
-            
-            async with self.session.get(url, params=params) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return data.get(coin_id, {}).get("usd")
-        except Exception as e:
-            logger.error(f"Failed to get current price: {e}")
-        
-        return None
-
-    def _check_price_condition(self, current_price: float, threshold: float, condition: str) -> Dict[str, Any]:
-        """Check if price condition is met"""
-        if condition == "above":
-            triggered = current_price > threshold
-        elif condition == "below":
-            triggered = current_price < threshold
-        else:
-            triggered = False
-        
-        return {
-            "triggered": triggered,
-            "current_price": current_price,
-            "threshold": threshold,
-            "condition": condition,
-            "difference": abs(current_price - threshold),
-            "percentage_diff": abs((current_price - threshold) / threshold * 100) if threshold > 0 else 0
-        }
-
-    async def _get_market_summary(self) -> Dict[str, Any]:
-        """Get market summary for notifications"""
-        try:
-            if self.session is None:
-                self.session = aiohttp.ClientSession()
-            
-            url = f"{self.coingecko_base_url}/global"
-            async with self.session.get(url) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    global_data = data.get("data", {})
-                    
-                    return {
-                        "total_market_cap": global_data.get("total_market_cap", {}).get("usd", 0),
-                        "total_volume": global_data.get("total_volume", {}).get("usd", 0),
-                        "market_cap_change_24h": global_data.get("market_cap_change_percentage_24h_usd", 0),
-                        "active_cryptocurrencies": global_data.get("active_cryptocurrencies", 0),
-                        "market_cap_percentage": global_data.get("market_cap_percentage", {})
-                    }
-        except Exception as e:
-            logger.error(f"Failed to get market summary: {e}")
-        
-        return {}
-
 
 
 class JiraTool(MCPTool):
@@ -1133,11 +886,12 @@ class JiraTool(MCPTool):
             
             jira_username = kwargs.get("jira_username")
             jira_api_token = kwargs.get("jira_api_token")
+            base_url = kwargs.get("base_url") or self.base_url
             
-            if not self.base_url or not jira_username or not jira_api_token:
+            if not base_url or not jira_username or not jira_api_token:
                 return {"type": "text", "text": "❌ Error: JIRA credentials not configured. Please provide domain, username, and API token."}
             
-            url = f"{self.base_url}/{endpoint}"
+            url = f"{base_url}/{endpoint}"
             headers = {
                 "Accept": "application/json",
                 "Content-Type": "application/json"
@@ -1482,7 +1236,11 @@ class JiraTool(MCPTool):
                 return [{"type": "text", "text": "❌ Error: JIRA domain, username, and API token are required. Please provide all credentials."}]
             
             # Set base URL dynamically
-            self.base_url = f"https://{jira_domain}.atlassian.net/rest/api/3"
+            base_url = f"https://{jira_domain}.atlassian.net/rest/api/3"
+            self.base_url = base_url
+            
+            # Add base_url to arguments for _make_request
+            arguments["base_url"] = base_url
             
             if action == "get_issues":
                 return await self._get_issues(**arguments)
