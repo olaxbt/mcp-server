@@ -103,7 +103,6 @@ from .defi_trading_tools import (
     CoinGeckoTool,
     EtherscanTool,
     BinanceTool,
-    UniswapTool
 )
 
 
@@ -116,6 +115,19 @@ from .metasleuth_wallet_tool import MetaSleuthWalletTool
 
 # Business Intelligence Tools
 from .apollo_tool import ApolloTool
+
+# New Trading & Data MCPs
+from .coinmarketcap_tool import CoinMarketCapTool
+from .cryptocompare_tool import CryptoCompareTool
+from .alpha_vantage_tool import AlphaVantageTool
+from .messari_tool import MessariTool
+from .polygon_tool import PolygonTool
+from .santiment_tool import SantimentTool
+# Additional MCPs
+from .coincap_tool import CoinCapTool
+from .coinpaprika_tool import CoinPaprikaTool
+from .alpha_vantage_stocks_tool import AlphaVantageStocksTool
+from .coingecko_defi_tool import CoinGeckoDeFiTool
 
 # Export all tools for easy importing
 __all__ = [
@@ -183,7 +195,6 @@ __all__ = [
     "CoinGeckoTool",
     "EtherscanTool",
     "BinanceTool",
-    "UniswapTool",
     
 
 
@@ -194,5 +205,18 @@ __all__ = [
 "MetaSleuthWalletTool",
 
 # Business Intelligence Tools
-"ApolloTool"
+"ApolloTool",
+
+    # New Trading & Data MCPs
+    "CoinMarketCapTool",
+    "CryptoCompareTool",
+    "AlphaVantageTool",
+    "MessariTool",
+    "PolygonTool",
+    "SantimentTool",
+    # Additional MCPs
+    "CoinCapTool",
+    "CoinPaprikaTool",
+    "AlphaVantageStocksTool",
+    "CoinGeckoDeFiTool"
 ]

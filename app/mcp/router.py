@@ -58,7 +58,6 @@ from .tools import (
     CoinGeckoTool,
     EtherscanTool,
     BinanceTool,
-    UniswapTool,
     
     # Blockchain Tools
 
@@ -68,7 +67,20 @@ from .tools import (
     MetaSleuthWalletTool,
     
     # Business Intelligence Tools
-    ApolloTool
+    ApolloTool,
+    
+    # New Trading & Data MCPs
+    CoinMarketCapTool,
+    CryptoCompareTool,
+    AlphaVantageTool,
+    MessariTool,
+    PolygonTool,
+    SantimentTool,
+    # Additional MCPs
+    CoinCapTool,
+    CoinPaprikaTool,
+    AlphaVantageStocksTool,
+    CoinGeckoDeFiTool
 )
 
 logger = logging.getLogger(__name__)
@@ -134,18 +146,30 @@ class MCPRouter:
             "coingecko": CoinGeckoTool(),
             "etherscan": EtherscanTool(),
             "binance": BinanceTool(),
-            "uniswap": UniswapTool(),
 
             
             # Blockchain Tools
 
 
-# Real Wallet Data Tools
-"chainbase_balance": ChainBaseBalanceTool(),
-"metasleuth_wallet": MetaSleuthWalletTool(),
-
-# Business Intelligence Tools
-            "apollo": ApolloTool()
+            # Real Wallet Data Tools
+            "chainbase_balance": ChainBaseBalanceTool(),
+            "metasleuth_wallet": MetaSleuthWalletTool(),
+            
+            # Business Intelligence Tools
+            "apollo": ApolloTool(),
+            
+            # New Trading & Data MCPs
+            "coinmarketcap": CoinMarketCapTool(),
+            "cryptocompare": CryptoCompareTool(),
+            "alpha_vantage": AlphaVantageTool(),
+            "messari": MessariTool(),
+            "polygon": PolygonTool(),
+            "santiment": SantimentTool(),
+            # Additional MCPs
+            "coincap": CoinCapTool(),
+            "coinpaprika": CoinPaprikaTool(),
+            "alpha_vantage_stocks": AlphaVantageStocksTool(),
+            "coingecko_defi": CoinGeckoDeFiTool()
         }
         
         # Register all tools with validation rules
