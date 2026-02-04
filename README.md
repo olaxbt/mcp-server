@@ -397,6 +397,14 @@ MCP_DEBUG=false
 
 **Note**: The NFT marketplace tool will work without API keys but with rate limits. API keys provide higher rate limits and better reliability.
 
+## Using with Nexus on BNB Chain
+
+You can run this service as part of the OlaXBT *Nexus* stack and settle usage directly on *BNB Chain (BSC / BNB Smart Chain)*.
+
+Fund your Nexus-connected wallet with BNB or supported stablecoins on BNB Chain, then buy credits through the Nexus interface; all metered usage is settled on BNB Chain with low fees, and can later be expanded to opBNB or Greenfield–aligned workflows.
+
+This lets agents and trading tools consume data and actions through Nexus while keeping payments and accounting native to the BNB Chain ecosystem.
+
 ## License
 
 This project is licensed under the MIT License. 
